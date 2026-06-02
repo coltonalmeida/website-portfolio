@@ -1,8 +1,9 @@
 # CLAUDE.md — Working Guidelines for the 3D Portfolio
 
-This is a personal portfolio: an interactive low-poly 3D island built with
-**Next.js (App Router) + React Three Fiber**. Read `IMPLEMENTATION_PLAN.md`
-in this folder for the architecture and build sequence before starting work.
+This is a personal portfolio: an interactive low-poly **3D Toronto city scene**
+built with **Next.js (App Router) + React Three Fiber**. Read
+`IMPLEMENTATION_PLAN.md` in this folder for the architecture and build sequence
+before starting work.
 
 ## Golden rules (always)
 
@@ -13,9 +14,58 @@ in this folder for the architecture and build sequence before starting work.
    surrounding style, naming, and patterns.
 5. **Verify before claiming done** — run `npm run dev` (or `npm run build`)
    and confirm the change actually works. Report failures honestly.
-6. **Small, focused changes.** Don't refactor unrelated code in the same pass.
-7. **Ask when genuinely blocked** by an ambiguous or irreversible decision;
+6. **Take screenshots so the user can SEE what you're making.** This is a
+   visual 3D site and the user is often away — screenshots are how they review
+   your progress. After each meaningful visual change, start the dev server,
+   open the page, and **capture screenshots**, then **save them to a
+   `screenshots/` folder** in the project (e.g. `screenshots/step-6-skyline.png`)
+   so the user can flip through them later. Capture the key states: the default
+   view of the Toronto scene, each zone focused with its overlay open, and both
+   desktop **and** mobile widths. Reference the saved files in your summary /
+   Progress Log so the user knows what to look at. Use the Preview MCP tools
+   (`preview_start`, `preview_screenshot`, `preview_click`, `preview_resize`) or
+   the Chrome tools. This doubles as your own verification — never claim a
+   visual change works without seeing it first.
+7. **Small, focused changes.** Don't refactor unrelated code in the same pass.
+8. **Ask when genuinely blocked** by an ambiguous or irreversible decision;
    otherwise pick a sensible default and proceed.
+
+## Design theme — Toronto city
+
+The scene is a stylized **low-poly Toronto, Canada** diorama (a small city
+"island"/platform) **at night**, not a generic island. Keep it recognizably
+Toronto and low-poly, but **add real detail** — it should feel rich and crafted,
+not bare. Layer in props, varied buildings, and small touches so the scene
+rewards looking closely.
+
+- **Centerpiece:** the **CN Tower** as the iconic skyline anchor, with a cluster
+  of Financial District towers around it. Optionally the SkyDome/Rogers Centre
+  dome nearby.
+- **Setting:** a waterfront edge for **Lake Ontario** (flat water plane), city
+  streets/blocks on the platform.
+- **Toronto flavor (use sparingly):** a red **TTC streetcar**, Nathan Phillips
+  Square / the "TORONTO" sign vibe, maple-leaf accent, a friendly low-poly
+  raccoon as an easter-egg mascot.
+- **Map the four zones to Toronto landmarks** (pick what reads best):
+  - **Experience** → the **CN Tower** (a "climb"/journey upward).
+  - **Projects** → the **Financial District** skyscraper cluster.
+  - **Skills** → a **streetcar / Distillery District** workshop block.
+  - **Contact** → the **waterfront / ferry dock** (or a mailbox by the lake).
+- **Night theme (primary):** a deep night-sky gradient (dark navy/indigo) with
+  **stars and a moon**. The city is alive with light — **glowing windows** on the
+  towers (emissive, varied/random so it reads as occupied), the **CN Tower lit
+  up** (color-changing accent lights are very Toronto), **street lamps**,
+  **streetcar/headlight glow**, and warm reflections on **Lake Ontario** (the
+  water plane should catch the city lights). Use emissive materials + a few point
+  lights for the glow; keep flat-shaded geometry.
+- **Detail to add:** varied building heights/footprints, rooftop water towers and
+  antennas, tiny trees, road markings, parked cars, docks/boats at the
+  waterfront, a few billboards/signs. Small density beats one big empty platform.
+- **Palette:** night blues/indigos for sky + lake, warm amber/yellow window glow,
+  a **red** accent (TTC / maple leaf / CN Tower lights), cool neutral concrete.
+- This theme **supersedes** any earlier "generic island" wording in
+  `IMPLEMENTATION_PLAN.md` — the zone interaction model stays the same; only the
+  visual identity changes.
 
 ## Tech stack — USE these
 

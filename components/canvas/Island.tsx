@@ -1,117 +1,114 @@
-import { useGLTF } from "@react-three/drei";
+import { MeshReflectorMaterial, useGLTF } from "@react-three/drei";
 import type { ThreeElements } from "@react-three/fiber";
 import type { Group } from "three";
 
 /**
- * The low-poly island base: water, a sandy shoreline, a grassy plateau, a
- * rocky underwater taper, and a few decorative pines. Everything is built
- * from cheap primitives with `flatShading` for the faceted low-poly look.
+ * The Toronto "diorama" base: a raised concrete city platform (the land) and a
+ * large reflective **Lake Ontario** plane to the south that catches the city
+ * lights. Streets with faint lane markings hint at city blocks. Flat-shaded,
+ * low-poly. (Formerly the island terrain; same role — the world's ground.)
  *
- * GLB seam: pass `modelUrl` (after dropping a `.glb` into `public/models/`)
- * to swap the whole primitive base for a loaded model — zones and camera
- * wiring stay untouched. Until then the primitive path renders.
+ * GLB seam preserved: pass `modelUrl` to swap the primitive base for a loaded
+ * model without touching zone/camera wiring.
  */
 
-// Vertical reference points (world Y) so props sit on the right surface.
-const SAND_TOP = 0.8;
-const GRASS_TOP = 1.6;
+// World-Y reference points so props/buildings sit on the right surface.
+export const GROUND_Y = 0; // top of the city platform
+export const LAKE_Y = -0.25; // lake surface, a touch below the waterfront
 
 type IslandProps = ThreeElements["group"] & {
-  /** Optional `.glb` URL; when set, replaces the primitive base. */
   modelUrl?: string;
 };
 
 export default function Island({ modelUrl, ...groupProps }: IslandProps) {
   return (
     <group {...groupProps}>
-      {modelUrl ? <IslandModel url={modelUrl} /> : <PrimitiveIsland />}
+      {modelUrl ? <IslandModel url={modelUrl} /> : <CityGround />}
     </group>
   );
 }
 
-function PrimitiveIsland() {
+function CityGround() {
   return (
     <group>
-      {/* Water — large flat plane the island sits in. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[160, 160]} />
-        <meshStandardMaterial color="#2f6f9f" roughness={0.85} metalness={0} />
+      {/* Lake Ontario — reflective plane that mirrors the lit city. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, LAKE_Y, 12]}>
+        <planeGeometry args={[200, 200]} />
+        <MeshReflectorMaterial
+          resolution={512}
+          mixBlur={1}
+          blur={[400, 120]}
+          mirror={0.55}
+          mixStrength={2.2}
+          color="#0a1226"
+          metalness={0.6}
+          roughness={0.85}
+          depthScale={0}
+        />
       </mesh>
 
-      {/* Rocky base tapering down beneath the water. */}
-      <mesh position={[0, -1.5, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[6, 3, 3.2, 12, 1]} />
-        <meshStandardMaterial color="#5d5043" flatShading roughness={1} />
+      {/* City platform (the land). Top sits at GROUND_Y = 0. */}
+      <mesh position={[0, -0.6, -3]} receiveShadow castShadow>
+        <boxGeometry args={[22, 1.2, 16]} />
+        <meshStandardMaterial color="#12161f" roughness={1} flatShading />
       </mesh>
 
-      {/* Sandy shoreline ring (pokes above the water line). */}
-      <mesh position={[0, 0, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[7.2, 6, 1.6, 18, 1]} />
-        <meshStandardMaterial color="#e6cf9c" flatShading roughness={1} />
+      {/* Waterfront seawall lip along the south edge (z = +5). */}
+      <mesh position={[0, -0.08, 5]} castShadow receiveShadow>
+        <boxGeometry args={[22, 0.35, 0.5]} />
+        <meshStandardMaterial color="#1c2230" roughness={1} flatShading />
       </mesh>
 
-      {/* Grassy plateau the zones live on. */}
-      <mesh position={[0, 1.2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[6.3, 6.9, 0.8, 18, 1]} />
-        <meshStandardMaterial color="#6fae4f" flatShading roughness={1} />
-      </mesh>
-
-      {/* A gentle hill for elevation interest. */}
-      <mesh position={[-3, GRASS_TOP, -2.4]} castShadow receiveShadow>
-        <coneGeometry args={[2.4, 1.8, 8, 1]} />
-        <meshStandardMaterial color="#5e9b41" flatShading roughness={1} />
-      </mesh>
-
-      {/* Decorative pines scattered on the plateau (deterministic). */}
-      {TREES.map((t, i) => (
-        <Tree key={i} position={[t.x, GRASS_TOP, t.z]} scale={t.s} />
-      ))}
+      {/* Streets — slightly raised dark asphalt strips with lane dashes. */}
+      <Road position={[0, 0.012, 1.5]} size={[22, 2]} dashAxis="x" />
+      <Road position={[-1, 0.012, -3]} size={[2, 16]} dashAxis="z" />
     </group>
   );
 }
 
-// Fixed tree positions, tucked toward the interior so they don't collide
-// with the four zone landmarks placed near the cardinal edges.
-const TREES: { x: number; z: number; s: number }[] = [
-  { x: -2.2, z: 1.8, s: 1.0 },
-  { x: -3.6, z: -0.2, s: 0.8 },
-  { x: 1.6, z: 2.6, s: 0.9 },
-  { x: 2.8, z: -1.4, s: 1.1 },
-  { x: -1.2, z: -2.6, s: 0.85 },
-  { x: 0.4, z: 0.6, s: 0.7 },
-];
-
-function Tree({
+/** A flat asphalt strip with a dashed centre line (emissive, faint). */
+function Road({
   position,
-  scale = 1,
+  size,
+  dashAxis,
 }: {
   position: [number, number, number];
-  scale?: number;
+  size: [number, number];
+  dashAxis: "x" | "z";
 }) {
+  const [w, l] = size;
+  const length = dashAxis === "x" ? w : l;
+  const dashCount = Math.floor(length / 1.4);
+
   return (
-    <group position={position} scale={scale}>
-      <mesh position={[0, 0.35, 0]} castShadow>
-        <cylinderGeometry args={[0.16, 0.22, 0.7, 6]} />
-        <meshStandardMaterial color="#7a5230" flatShading roughness={1} />
+    <group position={position}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[w, l]} />
+        <meshStandardMaterial color="#0b0e15" roughness={1} />
       </mesh>
-      <mesh position={[0, 1.1, 0]} castShadow>
-        <coneGeometry args={[0.9, 1.3, 7]} />
-        <meshStandardMaterial color="#4f9e44" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0, 1.85, 0]} castShadow>
-        <coneGeometry args={[0.62, 1.0, 7]} />
-        <meshStandardMaterial color="#438a3a" flatShading roughness={1} />
-      </mesh>
+      {Array.from({ length: dashCount }).map((_, i) => {
+        const offset = (i - (dashCount - 1) / 2) * 1.4;
+        const pos: [number, number, number] =
+          dashAxis === "x" ? [offset, 0.01, 0] : [0, 0.01, offset];
+        const dashSize: [number, number] =
+          dashAxis === "x" ? [0.5, 0.08] : [0.08, 0.5];
+        return (
+          <mesh key={i} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={dashSize} />
+            <meshStandardMaterial
+              color="#d8c14a"
+              emissive="#d8c14a"
+              emissiveIntensity={0.6}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
 
-/** GLB path: render a loaded island model in place of the primitives. */
+/** GLB path: render a loaded base model in place of the primitives. */
 function IslandModel({ url }: { url: string }) {
   const { scene } = useGLTF(url);
   return <primitive object={scene as Group} />;
 }
-
-// Re-export the surface heights so zone components can sit props on the
-// plateau without hard-coding magic numbers.
-export { GRASS_TOP, SAND_TOP };

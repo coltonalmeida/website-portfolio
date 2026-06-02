@@ -21,7 +21,7 @@ export default function Nav() {
           Colton Almeida
         </h1>
         <p className="text-xs text-white/70 drop-shadow">
-          Interactive 3D portfolio — click a landmark or use the menu
+          Toronto at night — click a landmark or use the menu
         </p>
       </div>
 

@@ -4,13 +4,15 @@ import { MathUtils } from "three";
 import type { Group } from "three";
 import type { SectionId, ZoneConfig } from "@/types";
 import { usePortfolio } from "@/lib/store";
+import { LAKE_Y } from "./Island";
+import Building from "./Building";
+import CNTower from "./CNTower";
 
 /**
- * One clickable landmark. The outer group is fixed at the zone's world
+ * One clickable Toronto landmark. The outer group is fixed at the zone's world
  * position and owns the pointer events; an inner group animates a hover/active
- * lift + scale (mutated in `useFrame`, never via React props, so re-renders
- * don't fight the animation). Clicking sets the active section in the store;
- * the camera fly-to reacts to that in Step 4.
+ * lift + scale (mutated in `useFrame`, never via React props). Clicking sets
+ * the active section; the camera fly-to reacts to that in `CameraRig`.
  */
 export default function Zone({ config }: { config: ZoneConfig }) {
   const innerRef = useRef<Group>(null);
@@ -22,20 +24,18 @@ export default function Zone({ config }: { config: ZoneConfig }) {
   const setHoveredSection = usePortfolio((s) => s.setHoveredSection);
 
   const isActive = activeSection === config.id;
-  // Lift on direct 3D hover, when this section is hovered in the nav, or active.
   const lifted = hovered || hoveredSection === config.id || isActive;
 
   useFrame((_, delta) => {
     const g = innerRef.current;
     if (!g) return;
-    const targetY = lifted ? 0.35 : 0;
-    const targetScale = lifted ? 1.08 : 1;
+    const targetY = lifted ? 0.22 : 0;
+    const targetScale = lifted ? 1.05 : 1;
     g.position.y = MathUtils.damp(g.position.y, targetY, 9, delta);
     const s = MathUtils.damp(g.scale.x, targetScale, 9, delta);
     g.scale.setScalar(s);
   });
 
-  // Pointer cursor while hovering a landmark.
   useEffect(() => {
     if (!hovered) return;
     document.body.style.cursor = "pointer";
@@ -44,7 +44,7 @@ export default function Zone({ config }: { config: ZoneConfig }) {
     };
   }, [hovered]);
 
-  const glow = lifted ? 0.7 : 0;
+  const glow = lifted ? 1 : 0;
 
   return (
     <group
@@ -73,166 +73,175 @@ export default function Zone({ config }: { config: ZoneConfig }) {
 
 type LandmarkProps = { id: SectionId; accent: string; glow: number };
 
-/** Dispatches to the right low-poly prop cluster for a section. */
 function Landmark({ id, accent, glow }: LandmarkProps) {
   switch (id) {
-    case "skills":
-      return <SkillsLandmark accent={accent} glow={glow} />;
-    case "projects":
-      return <ProjectsLandmark accent={accent} glow={glow} />;
     case "experience":
-      return <ExperienceLandmark accent={accent} glow={glow} />;
+      return <CNTower glow={glow} />;
+    case "projects":
+      return <FinancialDistrict accent={accent} glow={glow} />;
+    case "skills":
+      return <StreetcarBlock accent={accent} glow={glow} />;
     case "contact":
-      return <ContactLandmark accent={accent} glow={glow} />;
+      return <WaterfrontDock accent={accent} glow={glow} />;
   }
 }
 
 type ClusterProps = { accent: string; glow: number };
 
-/** Skills — a workbench with a glowing tool block. */
-function SkillsLandmark({ accent, glow }: ClusterProps) {
+/** Projects — a cluster of Financial District glass towers. */
+function FinancialDistrict({ accent, glow }: ClusterProps) {
   return (
     <group>
-      {/* Tabletop */}
-      <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.7, 0.16, 1]} />
-        <meshStandardMaterial color="#8a5a2b" flatShading roughness={1} />
+      <Building position={[0, 0, 0]} size={[1.6, 6.6, 1.6]} seed={11} color="#0e1b30" litChance={0.72} rooftop="antenna" />
+      <Building position={[1.9, 0, 0.3]} size={[1.3, 5.0, 1.3]} seed={12} color="#101f36" litChance={0.66} rooftop="water-tower" />
+      <Building position={[-1.7, 0, 0.5]} size={[1.2, 4.4, 1.2]} seed={13} color="#0d1a2e" litChance={0.62} />
+      <Building position={[0.5, 0, 1.9]} size={[1.5, 7.4, 1.5]} seed={14} color="#0e1d33" litChance={0.74} rooftop="antenna" />
+      <Building position={[-0.7, 0, -1.6]} size={[1.1, 3.8, 1.1]} seed={15} color="#0d1828" litChance={0.6} rooftop="water-tower" />
+      <pointLight position={[0, 5.5, 1]} intensity={2 + glow * 12} distance={14} color={accent} />
+    </group>
+  );
+}
+
+/** Skills — a red TTC streetcar in front of a brick workshop block. */
+function StreetcarBlock({ accent, glow }: ClusterProps) {
+  return (
+    <group>
+      {/* Workshop building (Distillery District brick vibe) */}
+      <Building position={[0, 0, -1.9]} size={[3.2, 3.0, 2.2]} seed={21} color="#2a1414" litChance={0.5} />
+      {/* Chimney */}
+      <mesh position={[1.1, 3.4, -2.2]} castShadow>
+        <boxGeometry args={[0.4, 1.4, 0.4]} />
+        <meshStandardMaterial color="#1c1010" flatShading roughness={1} />
       </mesh>
-      {/* Legs */}
-      {(
-        [
-          [0.72, 0.36, 0.4],
-          [-0.72, 0.36, 0.4],
-          [0.72, 0.36, -0.4],
-          [-0.72, 0.36, -0.4],
-        ] as [number, number, number][]
-      ).map((p, i) => (
-        <mesh key={i} position={p} castShadow>
-          <boxGeometry args={[0.13, 0.72, 0.13]} />
-          <meshStandardMaterial color="#6f4622" flatShading roughness={1} />
+
+      {/* Rails */}
+      <mesh position={[0, 0.02, 0.9]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4.2, 1.2]} />
+        <meshStandardMaterial color="#0a0d14" roughness={1} />
+      </mesh>
+
+      {/* Streetcar */}
+      <group position={[0, 0, 0.9]}>
+        <mesh position={[0, 0.78, 0]} castShadow>
+          <boxGeometry args={[3.2, 0.9, 1.05]} />
+          <meshStandardMaterial color="#c0392b" flatShading roughness={0.7} />
+        </mesh>
+        {/* Window band */}
+        <mesh position={[0, 0.98, 0]}>
+          <boxGeometry args={[2.8, 0.34, 1.08]} />
+          <meshStandardMaterial color="#1a1407" emissive="#ffcf7a" emissiveIntensity={1.3 + glow} flatShading />
+        </mesh>
+        {/* Roof */}
+        <mesh position={[0, 1.3, 0]} castShadow>
+          <boxGeometry args={[3.0, 0.16, 0.95]} />
+          <meshStandardMaterial color="#8f291f" flatShading roughness={0.8} />
+        </mesh>
+        {/* Pantograph */}
+        <mesh position={[0.2, 1.5, 0]}>
+          <boxGeometry args={[0.05, 0.3, 0.5]} />
+          <meshStandardMaterial color="#2b2f38" flatShading />
+        </mesh>
+        {/* Headlights */}
+        {[0.4, -0.4].map((z) => (
+          <mesh key={z} position={[1.62, 0.7, z]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshStandardMaterial color="#fff6d8" emissive="#fff0c0" emissiveIntensity={2.5 + glow * 2} />
+          </mesh>
+        ))}
+        {/* Route sign */}
+        <mesh position={[1.61, 1.1, 0]}>
+          <boxGeometry args={[0.04, 0.22, 0.5]} />
+          <meshStandardMaterial color="#0c0c0c" emissive={accent} emissiveIntensity={1.6} />
+        </mesh>
+        {/* Wheels */}
+        {[1.1, -1.1].map((x) => (
+          <mesh key={x} position={[x, 0.28, 0]}>
+            <boxGeometry args={[0.5, 0.3, 1.0]} />
+            <meshStandardMaterial color="#15171d" flatShading />
+          </mesh>
+        ))}
+      </group>
+
+      <pointLight position={[1.8, 1.0, 0.9]} intensity={2 + glow * 6} distance={7} color="#ffd28a" />
+    </group>
+  );
+}
+
+/** Contact — a waterfront ferry dock reaching over Lake Ontario. */
+function WaterfrontDock({ accent, glow }: ClusterProps) {
+  const pilingY = (LAKE_Y - 0.6) / 2; // centre of a piling from deck to below water
+  const pilingH = Math.abs(LAKE_Y - 0.6) + 0.6;
+  return (
+    <group>
+      {/* Deck */}
+      <mesh position={[0, 0.05, 0]} castShadow receiveShadow>
+        <boxGeometry args={[3.0, 0.16, 4.2]} />
+        <meshStandardMaterial color="#5b3a22" flatShading roughness={1} />
+      </mesh>
+      {/* Plank lines */}
+      {[-1.4, -0.7, 0, 0.7, 1.4].map((z) => (
+        <mesh key={z} position={[0, 0.14, z]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[3.0, 0.05]} />
+          <meshStandardMaterial color="#3f2817" />
         </mesh>
       ))}
-      {/* Glowing tool block (signature accent) */}
-      <mesh position={[0, 1.05, 0]} castShadow>
-        <boxGeometry args={[0.42, 0.42, 0.42]} />
-        <meshStandardMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={glow}
-          flatShading
-          roughness={0.7}
-        />
-      </mesh>
-      {/* A small drill / mallet beside it */}
-      <mesh position={[0.55, 0.92, 0.1]} rotation={[0, 0, Math.PI / 2.4]} castShadow>
-        <cylinderGeometry args={[0.07, 0.07, 0.5, 8]} />
-        <meshStandardMaterial color="#9aa0a6" flatShading roughness={0.8} />
-      </mesh>
-    </group>
-  );
-}
+      {/* Pilings */}
+      {[
+        [-1.3, -1.9],
+        [1.3, -1.9],
+        [-1.3, 1.9],
+        [1.3, 1.9],
+      ].map(([x, z], i) => (
+        <mesh key={i} position={[x, pilingY, z]} castShadow>
+          <cylinderGeometry args={[0.12, 0.12, pilingH, 6]} />
+          <meshStandardMaterial color="#3a2616" flatShading roughness={1} />
+        </mesh>
+      ))}
 
-/** Projects — a little cluster of buildings, one a glowing "monitor". */
-function ProjectsLandmark({ accent, glow }: ClusterProps) {
-  return (
-    <group>
-      <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.8, 1.4, 0.8]} />
-        <meshStandardMaterial color="#cfd8e3" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0.85, 0.5, 0.2]} castShadow receiveShadow>
-        <boxGeometry args={[0.6, 1.0, 0.6]} />
-        <meshStandardMaterial color="#b8c4d2" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[-0.8, 0.45, 0.3]} castShadow receiveShadow>
-        <boxGeometry args={[0.7, 0.9, 0.7]} />
-        <meshStandardMaterial color="#c4cdda" flatShading roughness={1} />
-      </mesh>
-      {/* Glowing screen face on the tallest building */}
-      <mesh position={[0, 0.95, 0.42]} castShadow>
-        <boxGeometry args={[0.5, 0.5, 0.06]} />
-        <meshStandardMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={glow}
-          flatShading
-          roughness={0.6}
-        />
-      </mesh>
-    </group>
-  );
-}
+      {/* Dock lamp post + glowing lamp */}
+      <group position={[1.2, 0, -1.8]}>
+        <mesh position={[0, 0.85, 0]} castShadow>
+          <cylinderGeometry args={[0.06, 0.08, 1.6, 6]} />
+          <meshStandardMaterial color="#23303a" flatShading />
+        </mesh>
+        <mesh position={[0, 1.75, 0]}>
+          <sphereGeometry args={[0.16, 10, 10]} />
+          <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={2 + glow * 2} />
+        </mesh>
+        <pointLight position={[0, 1.75, 0]} intensity={3 + glow * 5} distance={8} color={accent} />
+      </group>
 
-/** Experience — stacked platforms (a journey) topped with a glowing flag. */
-function ExperienceLandmark({ accent, glow }: ClusterProps) {
-  return (
-    <group>
-      <mesh position={[0, 0.15, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 0.3, 1.5]} />
-        <meshStandardMaterial color="#9aa0a6" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0.15, 0.45, 0.15]} castShadow receiveShadow>
-        <boxGeometry args={[1.05, 0.3, 1.05]} />
-        <meshStandardMaterial color="#aab0b6" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0.3, 0.75, 0.3]} castShadow receiveShadow>
-        <boxGeometry args={[0.6, 0.3, 0.6]} />
-        <meshStandardMaterial color="#babfc4" flatShading roughness={1} />
-      </mesh>
-      {/* Flag pole + glowing flag */}
-      <mesh position={[0.3, 1.25, 0.3]} castShadow>
-        <cylinderGeometry args={[0.04, 0.04, 0.7, 6]} />
-        <meshStandardMaterial color="#5b4636" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0.52, 1.45, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.28, 0.04]} />
-        <meshStandardMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={glow}
-          flatShading
-          roughness={0.7}
-        />
-      </mesh>
-    </group>
-  );
-}
+      {/* Mailbox by the lake (Canada Post red) */}
+      <group position={[-1.1, 0, -1.7]}>
+        <mesh position={[0, 0.45, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.6, 0.3]} />
+          <meshStandardMaterial color="#b8242b" flatShading roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.78, 0]}>
+          <cylinderGeometry args={[0.2, 0.2, 0.4, 8, 1, false, 0, Math.PI]} />
+          <meshStandardMaterial color="#9c1f25" flatShading />
+        </mesh>
+      </group>
 
-/** Contact — a lighthouse with a glowing lantern room. */
-function ContactLandmark({ accent, glow }: ClusterProps) {
-  return (
-    <group>
-      {/* Rock base */}
-      <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.7, 0.9, 0.4, 10]} />
-        <meshStandardMaterial color="#7d7066" flatShading roughness={1} />
-      </mesh>
-      {/* Tower */}
-      <mesh position={[0, 1.2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.42, 0.6, 1.8, 12]} />
-        <meshStandardMaterial color="#f2f2ef" flatShading roughness={1} />
-      </mesh>
-      {/* Accent band */}
-      <mesh position={[0, 1.35, 0]}>
-        <cylinderGeometry args={[0.52, 0.56, 0.38, 12]} />
-        <meshStandardMaterial color={accent} flatShading roughness={0.8} />
-      </mesh>
-      {/* Glowing lantern room */}
-      <mesh position={[0, 2.25, 0]} castShadow>
-        <cylinderGeometry args={[0.4, 0.4, 0.45, 8]} />
-        <meshStandardMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={Math.max(glow, 0.25)}
-          flatShading
-          roughness={0.5}
-        />
-      </mesh>
-      {/* Roof */}
-      <mesh position={[0, 2.65, 0]} castShadow>
-        <coneGeometry args={[0.5, 0.5, 8]} />
-        <meshStandardMaterial color="#44505a" flatShading roughness={1} />
-      </mesh>
+      {/* Little boat moored alongside */}
+      <group position={[-2.1, LAKE_Y + 0.18, 0.4]}>
+        <mesh position={[0, 0.1, 0]} castShadow>
+          <boxGeometry args={[0.9, 0.32, 1.9]} />
+          <meshStandardMaterial color="#d7e1ea" flatShading roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.42, -0.2]}>
+          <boxGeometry args={[0.6, 0.32, 0.7]} />
+          <meshStandardMaterial color="#23507a" flatShading />
+        </mesh>
+        <mesh position={[0, 0.95, 0.3]}>
+          <cylinderGeometry args={[0.03, 0.03, 1.0, 6]} />
+          <meshStandardMaterial color="#2b2f38" />
+        </mesh>
+        <mesh position={[0, 1.2, 0.3]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
+          <meshStandardMaterial color="#7CFC00" emissive="#7CFC00" emissiveIntensity={2} />
+        </mesh>
+      </group>
     </group>
   );
 }

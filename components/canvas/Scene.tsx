@@ -1,17 +1,17 @@
 import SceneEnvironment from "./Environment";
 import Island from "./Island";
+import City from "./City";
 import Zone from "./Zone";
 import { ZONES } from "@/lib/zones";
 import { usePortfolio } from "@/lib/store";
 
 /**
- * Assembles the 3D world. Rendered as a direct child of the `<Canvas>` so
- * the environment's `<color>`/`<fog>` attach onto the scene root.
+ * Assembles the night-time Toronto world. Rendered as a direct child of the
+ * `<Canvas>` so the environment's `<color>`/`<fog>` attach onto the scene root.
  *
- * The camera rig (Step 4) plugs in here next. Clicking a zone sets the active
- * section; clicking the island ground clears it (zones stop propagation so
- * their clicks don't bubble to the ground handler), and the Canvas's
- * `onPointerMissed` (in Experience) handles clicks that hit nothing at all.
+ * Clicking a zone landmark sets the active section; clicking the ground or
+ * ambient city clears it (zones stop propagation so their clicks don't bubble),
+ * and the Canvas's `onPointerMissed` handles clicks that hit nothing at all.
  */
 export default function Scene() {
   const setActiveSection = usePortfolio((s) => s.setActiveSection);
@@ -20,7 +20,11 @@ export default function Scene() {
     <>
       <SceneEnvironment />
 
-      <Island onClick={() => setActiveSection(null)} />
+      {/* Ground + ambient city — clicking either deselects. */}
+      <group onClick={() => setActiveSection(null)}>
+        <Island />
+        <City />
+      </group>
 
       {ZONES.map((config) => (
         <Zone key={config.id} config={config} />

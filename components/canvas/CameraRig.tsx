@@ -12,10 +12,13 @@ import { ZONES } from "@/lib/zones";
  * (`enabled={false}`) so the framing stays put until the visitor closes it.
  */
 
-/** Default "home" framing — matches the Canvas's initial camera. */
+/**
+ * Default "home" framing — a 3/4 view from over Lake Ontario (south), looking
+ * north into the lit skyline with the CN Tower anchoring the scene.
+ */
 export const HOME: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [13, 9, 13],
-  lookAt: [0, 1.4, 0],
+  position: [9, 8, 17],
+  lookAt: [-1, 3.5, -3],
 };
 
 export default function CameraRig() {

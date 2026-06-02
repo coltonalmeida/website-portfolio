@@ -1,8 +1,15 @@
-# Plan: Interactive 3D Portfolio (Low-Poly Island)
+# Plan: Interactive 3D Portfolio (Low-Poly Toronto, Night)
+
+> **THEME UPDATE (supersedes "island" wording throughout this doc):** the scene
+> is now a **detailed, night-themed low-poly Toronto city** diorama. See the
+> "Design theme — Toronto city" section in `CLAUDE.md` for the full direction.
+> The interaction model (zones → camera fly-to → overlay) is unchanged; only the
+> visual identity changes. Steps 1–5 were built with the old generic island —
+> Step 6 below now re-skins them into Toronto-at-night.
 
 ## Context
 
-Colton wants a standout personal portfolio built around an **interactive low-poly 3D island/world**. Instead of a traditional scrolling page, visitors explore a small 3D diorama where four landmark zones map to portfolio sections:
+Colton wants a standout personal portfolio built around an **interactive low-poly 3D Toronto city scene at night**. Instead of a traditional scrolling page, visitors explore a small 3D diorama where four landmark zones map to portfolio sections:
 
 - **Skills**
 - **Projects**
@@ -112,7 +119,17 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 3. ✅ **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. ✅ **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
 5. ✅ **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
-6. **Polish** — intro camera animation, touch/mobile handling, responsive overlay, no-WebGL fallback, strip `leva` from prod, optional postprocessing bloom.
+6. **Toronto night re-skin + polish** — re-theme the existing island into a
+   **detailed Toronto city at night** (per `CLAUDE.md`): night sky (stars + moon),
+   CN Tower centerpiece + Financial District towers, glowing/varied tower windows
+   (emissive), lit CN Tower, street lamps, streetcar + headlight glow, Lake Ontario
+   water plane catching city lights, plus density detail (varied buildings, rooftop
+   props, trees, cars, docks/boats, signs). Re-map zones to Toronto landmarks
+   (Experience→CN Tower, Projects→Financial District, Skills→streetcar/Distillery,
+   Contact→waterfront). Then the standard polish: intro camera animation, touch/
+   mobile handling, responsive overlay, no-WebGL fallback, strip `leva` from prod,
+   optional postprocessing bloom on the emissive lights. **Take screenshots to
+   `screenshots/` so Colton can review the look.**
 7. **Deploy** — `npm run build` clean (no type errors), verify locally, then deploy to Vercel; add a short `README.md`.
 
 ---
@@ -212,10 +229,18 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
 **A working, usable product is complete (Steps 1–5).** Per the build instructions,
 STOP here for the Step 6 design-polish pass to be done together.
 
-**RESUME HERE → Step 6 (Polish), when ready:** intro camera animation on first
-load; graceful exit animation for the overlay (retain last section through the
-out-transition); explicit no-WebGL fallback message; touch/mobile tuning
-(overlay as a bottom sheet, larger tap targets, pinch/orbit feel); responsive
-overlay sizing; optional `leva` dev controls (gated to dev only — do NOT ship to
-prod) and/or postprocessing bloom on the emissive accents. Then Step 7: final
+**RESUME HERE → Step 6 (Toronto night re-skin + polish), when ready:** FIRST
+re-skin the generic island into a **detailed Toronto city at night** per the
+"Design theme" section in `CLAUDE.md` — rework `Environment.tsx` (night sky,
+stars, moon, fog tint, point lights, bloom-ready emissive) and `Island.tsx` +
+`Zone.tsx`/`lib/zones.ts` (city platform, CN Tower + Financial District towers
+with emissive lit windows, Lake Ontario reflective water, street lamps,
+streetcar, cars, docks, trees, signs; re-map the four zones to Toronto
+landmarks). Capture screenshots to `screenshots/` (default view, each zone +
+overlay, desktop + mobile) so Colton can review. THEN polish: intro camera
+animation on first load; graceful overlay exit animation (retain last section
+through the out-transition); explicit no-WebGL fallback message; touch/mobile
+tuning (overlay as a bottom sheet, larger tap targets, pinch/orbit feel);
+responsive overlay sizing; optional `leva` dev controls (dev-only — do NOT ship
+to prod) and/or postprocessing bloom on the emissive lights. Then Step 7: final
 `npm run build`, write `README.md`, and deploy to Vercel (deploy only when asked).

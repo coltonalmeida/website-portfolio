@@ -1,51 +1,52 @@
 import type { SectionId, ZoneConfig } from "@/types";
-import { GRASS_TOP } from "@/components/canvas/Island";
+import { GROUND_Y } from "@/components/canvas/Island";
 
 /**
- * The four landmark zones, placed near the cardinal edges of the grass
- * plateau. Each carries its world position, accent color, and the camera
- * framing used when it becomes the active section. This array is the single
- * place to retune placement or camera angles.
+ * The four landmark zones, re-mapped to Toronto-at-night landmarks:
+ *   Experience → CN Tower · Projects → Financial District towers ·
+ *   Skills → TTC streetcar / workshop block · Contact → waterfront ferry dock.
+ * Each carries its world position, accent color, and the camera framing used
+ * when it becomes the active section. Single place to retune placement/angles.
  */
 export const ZONES: ZoneConfig[] = [
   {
-    id: "skills",
-    label: "Skills",
-    position: [-4.5, GRASS_TOP, 0],
-    color: "#f59e0b", // amber — workbench tools
+    id: "experience",
+    label: "Experience",
+    position: [-2.5, GROUND_Y, -3],
+    color: "#ff2d75", // CN Tower colour-changing lights
     cameraTarget: {
-      position: [-9.5, 5.5, 3.5],
-      lookAt: [-4.5, 2.2, 0],
+      position: [5, 7.5, 7.5],
+      lookAt: [-2.5, 5.5, -3],
     },
   },
   {
     id: "projects",
     label: "Projects",
-    position: [0, GRASS_TOP, -4.5],
-    color: "#3b82f6", // blue — building cluster
+    position: [4.8, GROUND_Y, -4.5],
+    color: "#4d9bff", // Financial District glass
     cameraTarget: {
-      position: [3.5, 5.5, -9.5],
-      lookAt: [0, 2.2, -4.5],
+      position: [11.5, 6, 5.5],
+      lookAt: [4.8, 3.4, -4.5],
     },
   },
   {
-    id: "experience",
-    label: "Experience",
-    position: [4.5, GRASS_TOP, 0],
-    color: "#8b5cf6", // violet — the journey up
+    id: "skills",
+    label: "Skills",
+    position: [-6.5, GROUND_Y, 1.8],
+    color: "#ffb454", // workshop / streetcar warmth
     cameraTarget: {
-      position: [9.5, 5.5, 3.5],
-      lookAt: [4.5, 2.4, 0],
+      position: [-11.5, 4, 8.5],
+      lookAt: [-6.5, 1.3, 1.8],
     },
   },
   {
     id: "contact",
     label: "Contact",
-    position: [0, GRASS_TOP, 4.5],
-    color: "#ef4444", // red — lighthouse beacon
+    position: [2.5, GROUND_Y, 6.5],
+    color: "#22d3c5", // waterfront teal
     cameraTarget: {
-      position: [-3.5, 5.5, 9.5],
-      lookAt: [0, 2.8, 4.5],
+      position: [5, 4, 13.5],
+      lookAt: [2.5, 0.9, 6.5],
     },
   },
 ];
@@ -54,4 +55,3 @@ export const ZONES: ZoneConfig[] = [
 export const ZONE_BY_ID: Record<SectionId, ZoneConfig> = Object.fromEntries(
   ZONES.map((z) => [z.id, z]),
 ) as Record<SectionId, ZoneConfig>;
-

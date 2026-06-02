@@ -108,7 +108,7 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 
 0. ✅ **Write this plan into the repo** — save this document as `IMPLEMENTATION_PLAN.md` in the project root so the Claude Code CLI (or any future session) can read it and resume/act on the work. It is the living spec; check off steps as they land.
 1. ✅ **Scaffold & baseline render** — `create-next-app` (TS, Tailwind, App Router); add `three @react-three/fiber @react-three/drei zustand` (+ dev `leva @types/three`). Render a `<Canvas>` with a single mesh + `OrbitControls`, `dpr={[1,2]}`, to confirm 3D works.
-2. **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
+2. ✅ **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
 3. **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
 5. **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
@@ -160,10 +160,24 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
   `app/page.tsx` mounts it full-screen; `globals.css` locks the viewport
   (height 100%, no scroll). `npm run build` is clean.
 
-**RESUME HERE → Step 2 (Island + environment):** create
-`components/canvas/Scene.tsx` (world assembly), `components/canvas/Island.tsx`
-(low-poly flat-shaded terrain — beveled disc / displaced plane, `useGLTF`-ready
-seam), and `components/canvas/Environment.tsx` (hemisphere + directional light,
-light fog, flat sky/background). Wire `Scene` into `Experience.tsx` replacing the
-placeholder `SpinningBox`, and set a sensible default camera framing. Keep
-`OrbitControls` for now (swapped for `CameraRig` in Step 4).
+- **Step 2 — Done.** Island + environment. `Environment.tsx` (`SceneEnvironment`):
+  sky-blue background + fog, hemisphere + ambient fill, shadow-casting directional
+  key light with a tightened ortho shadow frustum. `Island.tsx`: flat-shaded
+  primitive island (water plane, rocky underwater taper, sand shoreline, grass
+  plateau, a hill, six deterministic pines) plus a `useGLTF` seam (`modelUrl` prop)
+  and exported `GRASS_TOP`/`SAND_TOP` surface heights. `Scene.tsx` assembles
+  Environment + Island; `Experience.tsx` frames the camera ([13,9,13], fov 45) with
+  `OrbitControls` clamped (no pan, polar/distance limits, target [0,1.4,0]).
+  `npm run build` clean; dev server returns `GET / 200` with no runtime errors.
+  Note: R3F v9 dropped `GroupProps` — element prop types come from
+  `ThreeElements["group"]` now.
+
+**RESUME HERE → Step 3 (Zones + picking):** create `types/index.ts`
+(`SectionId = 'skills'|'projects'|'experience'|'contact'`, `ZoneConfig` =
+`{ id; position; cameraTarget: { position; lookAt }; ... }`), `lib/store.ts`
+(zustand: `activeSection: SectionId | null`, `setActiveSection`), a `ZONES`
+config array (four landmarks near the plateau edges, each with a distinct
+prop cluster), and `components/canvas/Zone.tsx` (a clickable `<group>` with
+hover lift/scale + emissive glow, pointer cursor, `onClick → setActiveSection`).
+Render the zones from `Scene.tsx`. Camera fly-to is Step 4; for now clicking
+just sets the store.

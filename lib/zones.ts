@@ -19,21 +19,23 @@ export const ZONES: ZoneConfig[] = [
   {
     id: "experience",
     label: "Experience",
-    position: [-10, GROUND_Y, 0],
+    // Union Station — moved far WEST so the three landmarks aren't bunched.
+    position: [-19, GROUND_Y, -4],
     color: "#3fae6b", // GO-train green
     cameraTarget: {
-      position: [-15.5, 5, 8.5],
-      lookAt: [-10, 1.6, 0.5],
+      position: [-24, 5, 5],
+      lookAt: [-19, 1.6, -4],
     },
   },
   {
     id: "projects",
     label: "Projects",
-    position: [7.5, GROUND_Y, -2.5],
+    // Construction site — moved far EAST, opposite Union Station.
+    position: [18, GROUND_Y, -5],
     color: "#4d9bff", // construction / glass blue
     cameraTarget: {
-      position: [14.5, 7, 5.5],
-      lookAt: [7.5, 3, -2],
+      position: [23.5, 7, 4],
+      lookAt: [18, 3, -5],
     },
   },
   {

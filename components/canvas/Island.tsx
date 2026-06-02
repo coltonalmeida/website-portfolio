@@ -1,6 +1,14 @@
 import { MeshReflectorMaterial, useGLTF } from "@react-three/drei";
 import type { ThreeElements } from "@react-three/fiber";
 import type { Group } from "three";
+import {
+  LAND,
+  ROADS,
+  MAIN_AVENUE_Z,
+  MAIN_CROSSINGS,
+  roadCrossings,
+  type RoadSeg,
+} from "@/lib/cityGrid";
 
 /**
  * The Toronto "diorama" base: a raised concrete city platform with a proper
@@ -14,16 +22,12 @@ import type { Group } from "three";
 // World-Y reference points so props/buildings sit on the right surface.
 export const GROUND_Y = 0; // top of the city platform
 export const LAKE_Y = -0.3; // lake surface, below the waterfront
-export const WATERFRONT_Z = 7; // south edge of the land (lake beyond)
+export const WATERFRONT_Z = LAND.maxZ; // south edge of the land (lake beyond)
 
-// Land extents (the platform footprint).
-export const LAND_MIN_X = -18;
-export const LAND_MAX_X = 18;
-export const LAND_MIN_Z = -18;
-
-const PLATFORM_W = LAND_MAX_X - LAND_MIN_X; // 36
-const PLATFORM_D = WATERFRONT_Z - LAND_MIN_Z; // 25
-const PLATFORM_CZ = (WATERFRONT_Z + LAND_MIN_Z) / 2; // -5.5
+// Platform footprint, derived from the shared city grid.
+const PLATFORM_W = LAND.maxX - LAND.minX; // 52
+const PLATFORM_D = LAND.maxZ - LAND.minZ; // 33
+const PLATFORM_CZ = (LAND.maxZ + LAND.minZ) / 2; // -9.5
 
 type IslandProps = ThreeElements["group"] & {
   modelUrl?: string;
@@ -68,60 +72,96 @@ function CityGround() {
         <meshStandardMaterial color="#1c2230" roughness={1} flatShading />
       </mesh>
 
-      {/* Street grid: two avenues (E-W) + three streets (N-S). */}
-      <Road axis="x" along={2} span={[LAND_MIN_X, LAND_MAX_X]} width={2.6} />
-      <Road axis="x" along={-8} span={[LAND_MIN_X, LAND_MAX_X]} width={2.6} />
-      <Road axis="z" along={-7} span={[LAND_MIN_Z, WATERFRONT_Z]} width={2.2} />
-      <Road axis="z" along={4} span={[LAND_MIN_Z, WATERFRONT_Z]} width={2.2} />
-      <Road axis="z" along={12} span={[LAND_MIN_Z, WATERFRONT_Z]} width={2.2} />
+      {/* Irregular arterial roads — raised asphalt with curbs + lane dashes,
+          both broken at intersections so crossings stay clean. */}
+      {ROADS.map((r, i) => (
+        <Road key={i} seg={r} crossings={roadCrossings(r)} />
+      ))}
 
-      {/* Sidewalks flanking the main avenue (z = 2). */}
-      <Sidewalk axis="x" along={0.45} span={[LAND_MIN_X, LAND_MAX_X]} />
-      <Sidewalk axis="x" along={3.55} span={[LAND_MIN_X, LAND_MAX_X]} />
-
-      {/* Crosswalks where the main avenue meets each N-S street. */}
-      {[-7, 4, 12].map((x) => (
-        <Crosswalk key={x} position={[x, 0.03, 2]} />
+      {/* Crosswalks where the main avenue meets each cross street. */}
+      {MAIN_CROSSINGS.map((x) => (
+        <Crosswalk key={x} position={[x, 0.09, MAIN_AVENUE_Z]} />
       ))}
     </group>
   );
 }
 
-/** Asphalt strip with a dashed centre line. */
+/**
+ * A raised asphalt road with concrete curbs down both edges and a dashed centre
+ * line — a proper 3D street. Curbs and dashes are BROKEN where perpendicular
+ * roads cross, so intersections stay clean open asphalt instead of overlapping.
+ */
 function Road({
-  axis,
-  along,
-  span,
-  width,
+  seg,
+  crossings,
 }: {
-  axis: "x" | "z";
-  along: number;
-  span: [number, number];
-  width: number;
+  seg: RoadSeg;
+  crossings: { at: number; half: number }[];
 }) {
-  const length = span[1] - span[0];
-  const mid = (span[0] + span[1]) / 2;
-  const pos: [number, number, number] =
-    axis === "x" ? [0, 0.02, along] : [along, 0.02, mid];
-  const planeArgs: [number, number] =
-    axis === "x" ? [length, width] : [width, length];
-  const dashCount = Math.floor(length / 1.6);
+  const { axis, along, from, to, width } = seg;
+  const length = to - from;
+  const mid = (from + to) / 2;
+  const horiz = axis === "x";
+  // Avenues sit a hair higher than streets so crossings don't z-fight.
+  const y = horiz ? 0.06 : 0.05;
+  const curbOff = width / 2 + 0.09;
+
+  // Solid stretches between crossings (in world along-coords) for the curbs.
+  const sorted = [...crossings].sort((a, b) => a.at - b.at);
+  const spans: [number, number][] = [];
+  let cur = from;
+  for (const c of sorted) {
+    const s = c.at - c.half - 0.05;
+    if (s > cur) spans.push([cur, s]);
+    cur = Math.max(cur, c.at + c.half + 0.05);
+  }
+  if (cur < to) spans.push([cur, to]);
+
+  const inCrossing = (p: number) =>
+    sorted.some((c) => Math.abs(p - c.at) < c.half + 0.4);
+
+  const pos: [number, number, number] = horiz ? [mid, 0, along] : [along, 0, mid];
+  const slab: [number, number, number] = horiz
+    ? [length, y, width]
+    : [width, y, length];
+  const dashCount = Math.floor(length / 1.8);
 
   return (
     <group position={pos}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={planeArgs} />
+      {/* Asphalt slab (full length; higher avenues sit over streets cleanly) */}
+      <mesh position={[0, y / 2, 0]} receiveShadow>
+        <boxGeometry args={slab} />
         <meshStandardMaterial color="#0a0d14" roughness={0.7} metalness={0.2} />
       </mesh>
+
+      {/* Curbs — one box per solid span, per edge (skips intersections) */}
+      {spans.map(([s, e], si) =>
+        [curbOff, -curbOff].map((o) => {
+          const c = (s + e) / 2 - mid;
+          const len = e - s;
+          return (
+            <mesh
+              key={`${si}-${o}`}
+              position={horiz ? [c, 0.09, o] : [o, 0.09, c]}
+              castShadow
+              receiveShadow
+            >
+              <boxGeometry args={horiz ? [len, 0.18, 0.18] : [0.18, 0.18, len]} />
+              <meshStandardMaterial color="#2a3040" roughness={1} flatShading />
+            </mesh>
+          );
+        }),
+      )}
+
+      {/* Dashed centre line (skips intersections) */}
       {Array.from({ length: dashCount }).map((_, i) => {
-        const o =
-          axis === "x"
-            ? (i - (dashCount - 1) / 2) * 1.6 - mid
-            : (i - (dashCount - 1) / 2) * 1.6;
-        const dpos: [number, number, number] =
-          axis === "x" ? [o, 0.01, 0] : [0, 0.01, o];
-        const dsize: [number, number] =
-          axis === "x" ? [0.6, 0.09] : [0.09, 0.6];
+        const world = from + (i + 0.5) * (length / dashCount);
+        if (inCrossing(world)) return null;
+        const o = world - mid;
+        const dpos: [number, number, number] = horiz
+          ? [o, y + 0.01, 0]
+          : [0, y + 0.01, o];
+        const dsize: [number, number] = horiz ? [0.7, 0.1] : [0.1, 0.7];
         return (
           <mesh key={i} position={dpos} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={dsize} />
@@ -134,30 +174,6 @@ function Road({
         );
       })}
     </group>
-  );
-}
-
-/** A raised concrete sidewalk strip. */
-function Sidewalk({
-  axis,
-  along,
-  span,
-}: {
-  axis: "x" | "z";
-  along: number;
-  span: [number, number];
-}) {
-  const length = span[1] - span[0];
-  const mid = (span[0] + span[1]) / 2;
-  const pos: [number, number, number] =
-    axis === "x" ? [0, 0.05, along] : [along, 0.05, mid];
-  const args: [number, number, number] =
-    axis === "x" ? [length, 0.1, 0.5] : [0.5, 0.1, length];
-  return (
-    <mesh position={[pos[0], pos[1], pos[2]]} receiveShadow castShadow>
-      <boxGeometry args={args} />
-      <meshStandardMaterial color="#2a3040" roughness={1} flatShading />
-    </mesh>
   );
 }
 

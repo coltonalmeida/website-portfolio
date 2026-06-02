@@ -1,6 +1,37 @@
 import Building, { type BuildingProps } from "./Building";
 import CNTower from "./CNTower";
+import CNTowerModel from "./CNTowerModel";
 import { TOWER_POSITION } from "@/lib/zones";
+import {
+  DISTRICTS,
+  CARS as CAR_SLOTS,
+  carTransform,
+  hash2,
+  isReserved,
+  isOnRoad,
+  MAIN_AVENUE_Z,
+  TRAFFIC_LIGHTS,
+} from "@/lib/cityGrid";
+import TrafficLight from "./TrafficLight";
+
+/**
+ * The real Sketchfab CN Tower GLB ("CN Tower" by nidhi3ds, CC-BY) lives at
+ * `public/models/cn-tower.glb`. The raw model is offset far from the origin and
+ * its base sits at y≈2.05 — these measured constants (from the GLB bbox) let us
+ * recentre its footprint over the tower position and drop its base onto the
+ * platform, so tuning the look is just the single `TOWER_MODEL_SCALE` knob.
+ */
+const HAS_TOWER_MODEL = true;
+const TOWER_MODEL_SCALE = 1.15;
+const TOWER_MODEL_CENTER_XZ: [number, number] = [156.401, 25.445];
+// Base disc is hidden in CNTowerModel, so the lowest tower geometry is now the
+// shaft foot at model-y ≈ 3.5 — anchor that to the platform.
+const TOWER_MODEL_BASE_Y = 3.5;
+const TOWER_MODEL_OFFSET: [number, number, number] = [
+  -TOWER_MODEL_SCALE * TOWER_MODEL_CENTER_XZ[0],
+  -TOWER_MODEL_SCALE * TOWER_MODEL_BASE_Y,
+  -TOWER_MODEL_SCALE * TOWER_MODEL_CENTER_XZ[1],
+];
 
 /**
  * The CN Tower centerpiece plus all ambient (non-interactive) city detail that
@@ -11,72 +42,64 @@ import { TOWER_POSITION } from "@/lib/zones";
  * Clear of the land zones — Union Station ~[-10,0], Construction ~[7.5,-2.5],
  * and the CN Tower / Skills ticker at [0,-5].
  */
-const BUILDINGS: BuildingProps[] = [
-  // Financial District (NE, tall)
-  { position: [13.5, 0, -15], size: [2.0, 8.5, 2.0], seed: 51, rooftop: "antenna" },
-  { position: [15.8, 0, -13], size: [1.8, 6.8, 1.8], seed: 52, rooftop: "water-tower" },
-  { position: [14.5, 0, -11.5], size: [1.6, 5.6, 1.6], seed: 53 },
-  { position: [16.6, 0, -16], size: [1.7, 7.4, 1.7], seed: 54, rooftop: "antenna" },
-  // North skyline
-  { position: [-15, 0, -14], size: [1.8, 5.2, 1.8], seed: 55, rooftop: "water-tower" },
-  { position: [-12, 0, -15.5], size: [1.6, 6.0, 1.6], seed: 56, rooftop: "antenna" },
-  { position: [-16.5, 0, -11], size: [1.5, 3.6, 1.5], seed: 57 },
-  { position: [-9, 0, -14], size: [1.7, 4.6, 1.7], seed: 58, rooftop: "water-tower" },
-  { position: [-3, 0, -14], size: [1.8, 5.4, 1.8], seed: 59, rooftop: "antenna" },
-  { position: [1.5, 0, -15], size: [1.6, 4.2, 1.6], seed: 60 },
-  { position: [-5, 0, -11], size: [1.5, 3.4, 1.5], seed: 61 },
-  { position: [8, 0, -14], size: [1.7, 5.0, 1.7], seed: 62, rooftop: "water-tower" },
-  { position: [10.5, 0, -15.5], size: [1.6, 4.0, 1.6], seed: 63 },
-  { position: [5.5, 0, -11], size: [1.5, 3.6, 1.5], seed: 64 },
-  // Mid-band fill (east + west)
-  { position: [14.5, 0, -4], size: [1.6, 4.4, 1.6], seed: 65, rooftop: "water-tower" },
-  { position: [16.6, 0, -1.5], size: [1.5, 3.2, 1.5], seed: 66 },
-  { position: [-16, 0, -4.5], size: [1.5, 3.0, 1.5], seed: 67, color: "#241616" },
-  { position: [-16.6, 0, -1], size: [1.4, 2.6, 1.4], seed: 68 },
-  // Waterfront low-rise
-  { position: [-4, 0, 4.4], size: [1.6, 2.4, 1.6], seed: 69, color: "#221717" },
-  { position: [6.5, 0, 4.3], size: [1.5, 2.0, 1.5], seed: 70 },
-  { position: [10, 0, 4], size: [1.5, 2.6, 1.5], seed: 71 },
-];
+// Buildings bunch into dense districts — each district packs a tight cols×rows
+// of towers (with jitter so it isn't a rigid grid), giving real downtown blocks
+// instead of lonely buildings. Any that land on a road or a landmark are dropped.
+const BUILDINGS: BuildingProps[] = DISTRICTS.flatMap((d, di) => {
+  const out: BuildingProps[] = [];
+  for (let i = 0; i < d.cols; i++) {
+    for (let j = 0; j < d.rows; j++) {
+      const cellX = d.cx + (i - (d.cols - 1) / 2) * d.dx;
+      const cellZ = d.cz + (j - (d.rows - 1) / 2) * d.dz;
+      const r1 = hash2(cellX, cellZ);
+      const r2 = hash2(cellX + 2.3, cellZ - 1.7);
+      const r3 = hash2(cellX - 5.1, cellZ + 3.3);
+      const r4 = hash2(cellX + 7.7, cellZ + 9.1);
+      const x = cellX + (r1 - 0.5) * 0.7;
+      const z = cellZ + (r2 - 0.5) * 0.7;
+      if (isReserved(x, z, 0.5) || isOnRoad(x, z, 1.0)) continue;
+      const h = d.hMin + r3 * (d.hMax - d.hMin);
+      out.push({
+        position: [x, 0, z] as [number, number, number],
+        size: [1.9 + r4 * 0.7, h, 1.7 + r1 * 0.6] as [number, number, number],
+        seed: Math.floor(r3 * 9973) + di * 97 + i * 7 + j,
+        rooftop: r4 < 0.25 ? "antenna" : r4 < 0.5 ? "water-tower" : "none",
+      });
+    }
+  }
+  return out;
+});
 
-const LAMPS: { x: number; z: number; cast?: boolean }[] = [
-  { x: -15, z: 3.4, cast: true },
-  { x: -9, z: 3.4 },
-  { x: -3, z: 3.4, cast: true },
-  { x: 1, z: 3.4 },
-  { x: 8, z: 3.4, cast: true },
-  { x: 15, z: 3.4 },
-  { x: -12, z: -6.6 },
-  { x: -3, z: -6.6, cast: true },
-  { x: 6, z: -6.6 },
-  { x: 14, z: -6.6 },
-];
+// Street lamps along the south side of the main avenue, skipping crossings.
+const LAMPS = [-22, -16, -6, 0, 6, 16, 22]
+  .map((x, i) => ({ x, z: MAIN_AVENUE_Z + 1.7, cast: i % 2 === 0 }))
+  .filter((l) => !isOnRoad(l.x, l.z, 0.4));
 
-const CARS: { x: number; z: number; rot: number; color: string }[] = [
-  { x: -6, z: 1.4, rot: 0, color: "#2e5a8f" },
-  { x: 2, z: 2.6, rot: Math.PI, color: "#8f2e2e" },
-  { x: 11, z: 1.4, rot: 0, color: "#cfd3da" },
-  { x: 4, z: -3, rot: Math.PI / 2, color: "#2e8f5a" },
-  { x: 4, z: -12, rot: Math.PI / 2, color: "#444a55" },
-  { x: -7, z: -5, rot: Math.PI / 2, color: "#b59a2a" },
-];
-
+// A small waterfront tree line, clear of the low-rise row and the streets.
 const TREES: { x: number; z: number; s: number }[] = [
-  { x: -15, z: 3.2, s: 1 },
-  { x: -16.2, z: 4, s: 0.8 },
-  { x: -14, z: 4.3, s: 0.9 },
-  { x: 13, z: 3.5, s: 0.95 },
-  { x: 15, z: 4, s: 0.8 },
-  { x: -1, z: 5.8, s: 0.9 },
-  { x: 1, z: 5.5, s: 0.85 },
+  { x: -8, z: 6.3, s: 1.0 },
+  { x: -2, z: 6.3, s: 0.85 },
+  { x: 4, z: 6.3, s: 0.95 },
+  { x: 21, z: 6.0, s: 0.9 },
+  { x: -23, z: 6.0, s: 0.8 },
 ];
 
 export default function City() {
   return (
     <group>
-      {/* Skyline centerpiece */}
+      {/* Skyline centerpiece — real GLB when present, else primitive tower */}
       <group position={TOWER_POSITION}>
-        <CNTower />
+        <CNTowerModel
+          enabled={HAS_TOWER_MODEL}
+          fallback={<CNTower />}
+          scale={TOWER_MODEL_SCALE}
+          position={TOWER_MODEL_OFFSET}
+        />
+        {/* Light the tower — its GLB materials read near-black under the low
+            night ambient, so give it a cool key, a warm rim, and a base uplight. */}
+        <pointLight position={[7, 11, 9]} intensity={55} distance={40} color="#bcd0ff" />
+        <pointLight position={[-6, 14, -5]} intensity={32} distance={34} color="#ffd2a0" />
+        <pointLight position={[0, 2, 3]} intensity={26} distance={20} color="#ffb878" />
       </group>
 
       {BUILDINGS.map((b, i) => (
@@ -85,16 +108,25 @@ export default function City() {
       {LAMPS.map((l, i) => (
         <Lamp key={i} position={[l.x, 0, l.z]} cast={l.cast} />
       ))}
-      {CARS.map((c, i) => (
-        <Car key={i} position={[c.x, 0, c.z]} rotation={c.rot} color={c.color} />
-      ))}
+      {CAR_SLOTS.map((c, i) => {
+        const { position, rotation } = carTransform(c);
+        return (
+          <Car key={i} position={position} rotation={rotation} color={c.color} />
+        );
+      })}
       {TREES.map((t, i) => (
         <Tree key={i} position={[t.x, 0, t.z]} scale={t.s} />
       ))}
+      {/* GLB traffic lights standing at the main intersections. */}
+      {TRAFFIC_LIGHTS.map((t, i) => (
+        <TrafficLight key={i} position={[t.x, 0, t.z]} rotation={t.rot} />
+      ))}
 
-      <Streetcar position={[-2, 0, 2]} />
-      <Billboard position={[5, 0, 3.4]} />
-      <Billboard position={[-6, 0, -9]} />
+      {/* TTC streetcar running along the main avenue. */}
+      <Streetcar position={[-2, 0, MAIN_AVENUE_Z]} />
+      {/* Billboards in the open CN Tower plaza (clear of roads + buildings). */}
+      <Billboard position={[3, 0, -7]} />
+      <Billboard position={[-4, 0, -2]} />
     </group>
   );
 }

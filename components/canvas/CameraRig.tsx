@@ -1,4 +1,5 @@
 import { CameraControls } from "@react-three/drei";
+import CameraControlsImpl from "camera-controls";
 import { useEffect, useRef, type ComponentRef } from "react";
 import type { Vector3Tuple } from "three";
 import { usePortfolio } from "@/lib/store";
@@ -19,14 +20,14 @@ import { ZONES } from "@/lib/zones";
  * north into the lit skyline with the CN Tower anchoring the scene.
  */
 export const HOME: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [14, 12, 27],
-  lookAt: [0, 5, -4],
+  position: [19, 14, 30],
+  lookAt: [0, 4, -8],
 };
 
 /** High, pulled-back opening pose the camera glides in from on first load. */
 const INTRO: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [4, 40, 64],
-  lookAt: [0, 6, -4],
+  position: [6, 46, 72],
+  lookAt: [0, 6, -8],
 };
 
 export default function CameraRig() {
@@ -38,6 +39,19 @@ export default function CameraRig() {
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
+
+    // Orbit-only controls: left-drag (and one-finger touch) rotates the camera
+    // around the city in a circle; zooming/dollying and panning are disabled,
+    // so the framing distance stays fixed.
+    const A = CameraControlsImpl.ACTION;
+    controls.mouseButtons.left = A.ROTATE;
+    controls.mouseButtons.right = A.NONE;
+    controls.mouseButtons.middle = A.NONE;
+    controls.mouseButtons.wheel = A.NONE;
+    controls.touches.one = A.TOUCH_ROTATE;
+    controls.touches.two = A.NONE;
+    controls.touches.three = A.NONE;
+
     controls.smoothTime = 1.2;
     void controls.setLookAt(...INTRO.position, ...INTRO.lookAt, false);
     const raf = requestAnimationFrame(() => {

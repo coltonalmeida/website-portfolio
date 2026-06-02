@@ -5,6 +5,7 @@ import type { SectionId } from "@/types";
 import { usePortfolio } from "@/lib/store";
 import { CONTENT, type SectionItem } from "@/lib/content";
 import { ZONE_BY_ID } from "@/lib/zones";
+import SkillsMarquee from "./SkillsMarquee";
 
 /**
  * DOM content panel for the active section. Reads `activeSection` from the
@@ -60,17 +61,25 @@ export default function Overlay() {
   const content = CONTENT[shown];
   const accent = ZONE_BY_ID[shown].color;
 
+  // Skills uses a wide bottom-centred strip (the "Core Skills" marquee); the
+  // other sections keep the compact side panel.
+  const isSkills = shown === "skills";
+  const wrapClass = isSkills
+    ? "pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:p-8"
+    : "pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:items-center sm:justify-end sm:p-8";
+  const closedClass = isSkills
+    ? "translate-y-6 opacity-0"
+    : "translate-y-6 opacity-0 sm:translate-y-0 sm:translate-x-8";
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:items-center sm:justify-end sm:p-8">
+    <div className={wrapClass}>
       <section
         role="dialog"
         aria-modal="false"
         aria-labelledby="overlay-title"
-        className={`pointer-events-auto w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:p-8 ${
-          open
-            ? "translate-y-0 opacity-100"
-            : "translate-y-6 opacity-0 sm:translate-y-0 sm:translate-x-8"
-        }`}
+        className={`pointer-events-auto w-full rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:p-8 ${
+          isSkills ? "max-w-5xl" : "max-w-md"
+        } ${open ? "translate-y-0 opacity-100" : closedClass}`}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
@@ -99,7 +108,9 @@ export default function Overlay() {
 
         <p className="text-sm leading-relaxed text-zinc-300">{content.body}</p>
 
-        {shown === "experience" ? (
+        {shown === "skills" ? (
+          <SkillsMarquee accent={accent} />
+        ) : shown === "experience" ? (
           <Timeline items={content.items} accent={accent} />
         ) : (
           <ul className="mt-5 space-y-2">

@@ -27,6 +27,30 @@ body {
   overscroll-behavior: none;
 }
 
+/* Skills "Core Skills" marquee: the track holds the card list twice, so a
+   -50% translate loops seamlessly. Hovering the strip pauses the scroll. */
+@keyframes skills-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.skills-marquee-track {
+  animation: skills-marquee var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+.skills-marquee-group:hover .skills-marquee-track,
+.skills-marquee-track:focus-within {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skills-marquee-track {
+    animation: none;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -20,7 +20,7 @@ export interface SectionContent {
 export const CONTENT: Record<SectionId, SectionContent> = {
   skills: {
     title: "Skills",
-    tagline: "The CN Tower ticker",
+    tagline: "What's in my toolkit",
     body: "Tools and technologies I reach for to design and ship interactive products end to end.",
     items: [
       { label: "TypeScript & React", detail: "App Router, hooks, suspense" },

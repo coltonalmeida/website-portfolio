@@ -82,7 +82,7 @@ function Landmark({ id, glow }: { id: SectionId; glow: number }) {
     case "projects":
       return <Construction glow={glow} />;
     case "skills":
-      return <SkillsTicker glow={glow} />;
+      return <SkillsTicker />;
     case "contact":
       return <WaterfrontDock glow={glow} />;
   }

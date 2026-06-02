@@ -36,7 +36,7 @@ async function capture(context, prefix, { withZones }) {
 
   await page.goto(BASE, { waitUntil: "networkidle" });
   await page.waitForSelector("canvas", { timeout: 30000 });
-  await sleep(5200); // first render + intro fly-in settle + reflections
+  await sleep(6500); // first render + intro fly-in settle + reflections
 
   // Quick WebGL sanity check.
   const gl = await page.evaluate(() => {

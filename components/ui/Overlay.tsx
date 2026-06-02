@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { SectionId } from "@/types";
 import { usePortfolio } from "@/lib/store";
-import { CONTENT } from "@/lib/content";
+import { CONTENT, type SectionItem } from "@/lib/content";
 import { ZONE_BY_ID } from "@/lib/zones";
 
 /**
@@ -99,30 +99,65 @@ export default function Overlay() {
 
         <p className="text-sm leading-relaxed text-zinc-300">{content.body}</p>
 
-        <ul className="mt-5 space-y-2">
-          {content.items.map((item) => (
-            <li
-              key={item.label}
-              className="rounded-lg border border-white/5 bg-white/5 px-4 py-3"
-            >
-              <span
-                className="block h-1 w-6 rounded-full"
-                style={{ backgroundColor: accent }}
-                aria-hidden
-              />
-              <span className="mt-2 block text-sm font-medium text-zinc-100">
-                {item.label}
-              </span>
-              {item.detail && (
-                <span className="mt-0.5 block text-xs text-zinc-400">
-                  {item.detail}
+        {shown === "experience" ? (
+          <Timeline items={content.items} accent={accent} />
+        ) : (
+          <ul className="mt-5 space-y-2">
+            {content.items.map((item) => (
+              <li
+                key={item.label}
+                className="rounded-lg border border-white/5 bg-white/5 px-4 py-3"
+              >
+                <span
+                  className="block h-1 w-6 rounded-full"
+                  style={{ backgroundColor: accent }}
+                  aria-hidden
+                />
+                <span className="mt-2 block text-sm font-medium text-zinc-100">
+                  {item.label}
                 </span>
-              )}
-            </li>
-          ))}
-        </ul>
+                {item.detail && (
+                  <span className="mt-0.5 block text-xs text-zinc-400">
+                    {item.detail}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
+  );
+}
+
+/** Vertical timeline of roles (the Experience "map"). */
+function Timeline({
+  items,
+  accent,
+}: {
+  items: SectionItem[];
+  accent: string;
+}) {
+  return (
+    <ol className="mt-5 space-y-5 border-l border-white/15 pl-5">
+      {items.map((item) => (
+        <li key={item.label} className="relative">
+          <span
+            className="absolute -left-[26px] top-1 h-3 w-3 rounded-full ring-4 ring-zinc-900"
+            style={{ backgroundColor: accent }}
+            aria-hidden
+          />
+          <span className="block text-sm font-medium text-zinc-100">
+            {item.label}
+          </span>
+          {item.detail && (
+            <span className="mt-0.5 block text-xs text-zinc-400">
+              {item.detail}
+            </span>
+          )}
+        </li>
+      ))}
+    </ol>
   );
 }
 

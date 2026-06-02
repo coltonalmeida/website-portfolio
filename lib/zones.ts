@@ -1,52 +1,60 @@
 import type { SectionId, ZoneConfig } from "@/types";
+import type { Vector3Tuple } from "three";
 import { GROUND_Y } from "@/components/canvas/Island";
 
 /**
- * The four landmark zones, re-mapped to Toronto-at-night landmarks:
- *   Experience → CN Tower · Projects → Financial District towers ·
- *   Skills → TTC streetcar / workshop block · Contact → waterfront ferry dock.
- * Each carries its world position, accent color, and the camera framing used
- * when it becomes the active section. Single place to retune placement/angles.
+ * The CN Tower's footprint — the skyline centerpiece. The Skills ticker wraps
+ * its shaft here, so the Skills zone shares this position.
+ */
+export const TOWER_POSITION: Vector3Tuple = [0, GROUND_Y, -5];
+
+/**
+ * The four landmark zones on the (bigger) Toronto map:
+ *   Experience → Union Station + GO train ·
+ *   Projects → building under construction ·
+ *   Skills → LED ticker wrapped on the CN Tower ·
+ *   Contact → waterfront ferry dock.
  */
 export const ZONES: ZoneConfig[] = [
   {
     id: "experience",
     label: "Experience",
-    position: [-2.5, GROUND_Y, -3],
-    color: "#ff2d75", // CN Tower colour-changing lights
+    position: [-10, GROUND_Y, 0],
+    color: "#3fae6b", // GO-train green
     cameraTarget: {
-      position: [5, 7.5, 7.5],
-      lookAt: [-2.5, 5.5, -3],
+      position: [-15.5, 5, 8.5],
+      lookAt: [-10, 1.6, 0.5],
     },
   },
   {
     id: "projects",
     label: "Projects",
-    position: [4.8, GROUND_Y, -4.5],
-    color: "#4d9bff", // Financial District glass
+    position: [7.5, GROUND_Y, -2.5],
+    color: "#4d9bff", // construction / glass blue
     cameraTarget: {
-      position: [11.5, 6, 5.5],
-      lookAt: [4.8, 3.4, -4.5],
+      position: [14.5, 7, 5.5],
+      lookAt: [7.5, 3, -2],
     },
   },
   {
     id: "skills",
     label: "Skills",
-    position: [-6.5, GROUND_Y, 1.8],
-    color: "#ffb454", // workshop / streetcar warmth
+    position: TOWER_POSITION,
+    color: "#ffb454", // amber LED ticker
+    noLift: true,
     cameraTarget: {
-      position: [-11.5, 4, 8.5],
-      lookAt: [-6.5, 1.3, 1.8],
+      position: [6.5, 6.5, 4.5],
+      lookAt: [0, 5, -5],
     },
   },
   {
     id: "contact",
     label: "Contact",
-    position: [2.5, GROUND_Y, 6.5],
+    position: [3, GROUND_Y, 10],
     color: "#22d3c5", // waterfront teal
     cameraTarget: {
-      position: [5, 4, 13.5],
-      lookAt: [2.5, 0.9, 6.5],
+      position: [5.5, 4.5, 17.5],
+      lookAt: [3, 0.9, 10],
     },
   },
 ];

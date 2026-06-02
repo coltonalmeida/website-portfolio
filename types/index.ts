@@ -25,4 +25,9 @@ export interface ZoneConfig {
   color: string;
   /** Camera framing applied when this zone becomes the active section. */
   cameraTarget: CameraTarget;
+  /**
+   * Skip the vertical hover/active lift (used for landmarks that are attached
+   * to other geometry, e.g. the Skills ticker wrapped around the CN Tower).
+   */
+  noLift?: boolean;
 }

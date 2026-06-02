@@ -19,14 +19,14 @@ import { ZONES } from "@/lib/zones";
  * north into the lit skyline with the CN Tower anchoring the scene.
  */
 export const HOME: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [9, 8, 17],
-  lookAt: [-1, 3.5, -3],
+  position: [14, 12, 27],
+  lookAt: [0, 5, -4],
 };
 
 /** High, pulled-back opening pose the camera glides in from on first load. */
 const INTRO: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [2, 26, 44],
-  lookAt: [-1, 4, -3],
+  position: [4, 40, 64],
+  lookAt: [0, 6, -4],
 };
 
 export default function CameraRig() {
@@ -77,7 +77,7 @@ export default function CameraRig() {
       enabled={activeSection === null}
       smoothTime={0.5}
       minDistance={6}
-      maxDistance={38}
+      maxDistance={60}
       minPolarAngle={0.2}
       maxPolarAngle={Math.PI / 2 - 0.05}
     />

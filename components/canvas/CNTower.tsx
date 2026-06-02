@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
 
 /**
@@ -8,27 +8,34 @@ import * as THREE from "three";
  * band + accent rings slowly cycle hue (the tower's signature colour-changing
  * lights); `glow` (hover/active) boosts their emissive intensity.
  *
- * One shared accent material instance is animated once per frame.
+ * Accent materials register themselves via a callback ref and are animated
+ * together each frame (read outside render, so no shared-mutable-state churn).
  */
+const accentProps = {
+  color: "#0c0f1a",
+  emissive: "#ff2d75",
+  emissiveIntensity: 1.6,
+  roughness: 0.5,
+  flatShading: true,
+} as const;
+
 export default function CNTower({ glow = 0 }: { glow?: number }) {
-  const accent = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: "#0c0f1a",
-        emissive: "#ff2d75",
-        emissiveIntensity: 1.6,
-        roughness: 0.5,
-        flatShading: true,
-      }),
-    [],
-  );
+  const ring1 = useRef<THREE.MeshStandardMaterial>(null);
+  const ring2 = useRef<THREE.MeshStandardMaterial>(null);
+  const deck = useRef<THREE.MeshStandardMaterial>(null);
+  const pod = useRef<THREE.MeshStandardMaterial>(null);
   const tipRef = useRef<THREE.MeshStandardMaterial>(null);
-  useEffect(() => () => accent.dispose(), [accent]);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    accent.emissive.setHSL((t * 0.06) % 1, 0.85, 0.55);
-    accent.emissiveIntensity = 1.5 + glow * 1.8 + Math.sin(t * 2) * 0.15;
+    const hue = (t * 0.06) % 1;
+    const intensity = 1.5 + glow * 1.8 + Math.sin(t * 2) * 0.15;
+    for (const ref of [ring1, ring2, deck, pod]) {
+      const mat = ref.current;
+      if (!mat) continue;
+      mat.emissive.setHSL(hue, 0.85, 0.55);
+      mat.emissiveIntensity = intensity;
+    }
     if (tipRef.current) {
       tipRef.current.emissiveIntensity = 2 + (Math.sin(t * 4) * 0.5 + 0.5) * 3;
     }
@@ -53,11 +60,13 @@ export default function CNTower({ glow = 0 }: { glow?: number }) {
       </mesh>
 
       {/* Base + mid accent rings (colour-cycling) */}
-      <mesh position={[0, 0.6, 0]} material={accent} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.6, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.62, 0.06, 8, 6]} />
+        <meshStandardMaterial ref={ring1} {...accentProps} />
       </mesh>
-      <mesh position={[0, 4.2, 0]} material={accent} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 4.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.4, 0.05, 8, 6]} />
+        <meshStandardMaterial ref={ring2} {...accentProps} />
       </mesh>
 
       {/* SkyPod — flared underside, deck, lit band, upper cap */}
@@ -65,8 +74,9 @@ export default function CNTower({ glow = 0 }: { glow?: number }) {
         <cylinderGeometry args={[1.1, 0.28, 1.1, 12]} />
         {concrete}
       </mesh>
-      <mesh position={[0, 7.55, 0]} material={accent}>
+      <mesh position={[0, 7.55, 0]}>
         <cylinderGeometry args={[1.2, 1.2, 0.3, 12]} />
+        <meshStandardMaterial ref={deck} {...accentProps} />
       </mesh>
       <mesh position={[0, 7.85, 0]} castShadow>
         <cylinderGeometry args={[1.08, 1.12, 0.45, 12]} />
@@ -82,8 +92,9 @@ export default function CNTower({ glow = 0 }: { glow?: number }) {
         <cylinderGeometry args={[0.12, 0.2, 1.6, 6]} />
         {concrete}
       </mesh>
-      <mesh position={[0, 9.55, 0]} material={accent}>
+      <mesh position={[0, 9.55, 0]}>
         <cylinderGeometry args={[0.36, 0.42, 0.4, 8]} />
+        <meshStandardMaterial ref={pod} {...accentProps} />
       </mesh>
 
       {/* Antenna spire */}

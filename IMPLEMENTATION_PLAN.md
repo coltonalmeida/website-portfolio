@@ -119,7 +119,7 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 3. ✅ **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. ✅ **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
 5. ✅ **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
-6. **Toronto night re-skin + polish** — re-theme the existing island into a
+6. ✅ **Toronto night re-skin + polish** — re-theme the existing island into a
    **detailed Toronto city at night** (per `CLAUDE.md`): night sky (stars + moon),
    CN Tower centerpiece + Financial District towers, glowing/varied tower windows
    (emissive), lit CN Tower, street lamps, streetcar + headlight glow, Lake Ontario
@@ -226,21 +226,47 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
   Nav/Overlay/Loader as DOM siblings of the Canvas. Build + lint clean; dev serves
   200 and SSRs the nav (accessible fallback present without WebGL).
 
-**A working, usable product is complete (Steps 1–5).** Per the build instructions,
-STOP here for the Step 6 design-polish pass to be done together.
+- **Step 6 — Done.** Toronto-at-night re-skin + polish.
+  - **Environment.tsx:** deep navy sky + fog, cool low ambient/hemisphere,
+    shadow-casting moonlight, an emissive moon disc + halo, and drei `Stars`.
+  - **Island.tsx:** city concrete platform + waterfront lip, streets with
+    emissive lane dashes, and a reflective **Lake Ontario** (`MeshReflectorMaterial`)
+    that catches the city lights. Exports `GROUND_Y` / `LAKE_Y`.
+  - **Building.tsx + lib/windowTexture.ts:** flat-shaded towers with procedural
+    emissive "lit windows" (seeded canvas textures), roof caps, and rooftop props
+    (water towers / antennas with red aviation lights).
+  - **CNTower.tsx:** iconic CN Tower (tapered hex shaft, flared SkyPod, antenna)
+    with hue-cycling accent lights (per-material refs animated in `useFrame`) and
+    a blinking aviation tip.
+  - **City.tsx:** ambient skyline buildings, street lamps (warm point lights),
+    parked cars (head/tail lights), trees, and a glowing billboard — all
+    deterministic.
+  - **Zone.tsx / lib/zones.ts:** zones re-mapped — Experience = CN Tower,
+    Projects = Financial District cluster, Skills = TTC streetcar + workshop,
+    Contact = waterfront dock (mailbox, moored boat, dock lamp). New positions,
+    accent colors, and night camera framings.
+  - **Experience.tsx:** `EffectComposer` **Bloom** (the night glow) + Vignette;
+    plus a **no-WebGL fallback** (the menu still serves all content).
+  - **CameraRig.tsx:** intro fly-in (snap high over the lake → glide to HOME);
+    HOME reframed into the skyline.
+  - **Overlay.tsx:** graceful **exit** animation (retains the last section through
+    the out-transition; all setState in rAF/timeout to stay lint-clean).
+  - Copy retheme (taglines, nav/loader). `tsc` + `npm run lint` + `npm run build`
+    all clean. Lint note: the React-Compiler rule set forbids reading/mutating
+    refs during render and mutating hook-arg values — animate via per-element
+    material refs in `useFrame` (see CNTower), not shared memoized materials.
+  - **Screenshots in `screenshots/`** (captured via Playwright headless Chromium —
+    `scripts/screenshots.mjs`, dev-only dep): `desktop-01-default` … `-05-contact`
+    (default + each zone with overlay) and `mobile-01-default`, `mobile-02-projects`
+    (bottom-sheet overlay).
 
-**RESUME HERE → Step 6 (Toronto night re-skin + polish), when ready:** FIRST
-re-skin the generic island into a **detailed Toronto city at night** per the
-"Design theme" section in `CLAUDE.md` — rework `Environment.tsx` (night sky,
-stars, moon, fog tint, point lights, bloom-ready emissive) and `Island.tsx` +
-`Zone.tsx`/`lib/zones.ts` (city platform, CN Tower + Financial District towers
-with emissive lit windows, Lake Ontario reflective water, street lamps,
-streetcar, cars, docks, trees, signs; re-map the four zones to Toronto
-landmarks). Capture screenshots to `screenshots/` (default view, each zone +
-overlay, desktop + mobile) so Colton can review. THEN polish: intro camera
-animation on first load; graceful overlay exit animation (retain last section
-through the out-transition); explicit no-WebGL fallback message; touch/mobile
-tuning (overlay as a bottom sheet, larger tap targets, pinch/orbit feel);
-responsive overlay sizing; optional `leva` dev controls (dev-only — do NOT ship
-to prod) and/or postprocessing bloom on the emissive lights. Then Step 7: final
-`npm run build`, write `README.md`, and deploy to Vercel (deploy only when asked).
+**Step 6 complete — the night-Toronto scene is live and polished.** Dev server is
+left running at http://localhost:3000 for review.
+
+**RESUME HERE → Step 7 (Deploy), when ready:** write a short `README.md` (what it
+is, stack, `npm run dev` / `npm run build`, the `useGLTF` + `lib/content.ts` swap
+points, how to regenerate screenshots), do a final `npm run build`, then deploy to
+Vercel — **only when Colton explicitly asks** (do not auto-deploy). Optional future
+polish: tune lake reflection strength, add a raccoon easter-egg / "TORONTO" sign,
+gentle idle auto-orbit, audio toggle. Real content still swaps into
+`lib/content.ts`; real `.glb` models via the `Island`/`useGLTF` seam.

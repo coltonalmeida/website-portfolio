@@ -6,10 +6,12 @@ import { ZONES } from "@/lib/zones";
 
 /**
  * Drives the camera from the active section. Uses drei `CameraControls`
- * (`makeDefault`) for smooth `setLookAt` transitions. An effect watches
- * `activeSection`: focus a zone → fly to its `cameraTarget`; deselect → fly
- * back to HOME. While a section is focused, user orbiting is locked
- * (`enabled={false}`) so the framing stays put until the visitor closes it.
+ * (`makeDefault`) for smooth `setLookAt` transitions.
+ *
+ * - On first mount it plays an **intro**: snap high above the lake, then glide
+ *   down into the HOME framing.
+ * - An effect watches `activeSection`: focus a zone → fly to its `cameraTarget`;
+ *   deselect → fly back to HOME. While focused, user orbiting is locked.
  */
 
 /**
@@ -21,28 +23,51 @@ export const HOME: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
   lookAt: [-1, 3.5, -3],
 };
 
+/** High, pulled-back opening pose the camera glides in from on first load. */
+const INTRO: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
+  position: [2, 26, 44],
+  lookAt: [-1, 4, -3],
+};
+
 export default function CameraRig() {
   const controlsRef = useRef<ComponentRef<typeof CameraControls>>(null);
   const activeSection = usePortfolio((s) => s.activeSection);
+  const firstRun = useRef(true);
 
+  // Intro fly-in (runs once).
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
+    controls.smoothTime = 1.2;
+    void controls.setLookAt(...INTRO.position, ...INTRO.lookAt, false);
+    const raf = requestAnimationFrame(() => {
+      void controls.setLookAt(...HOME.position, ...HOME.lookAt, true);
+    });
+    const restore = setTimeout(() => {
+      controls.smoothTime = 0.5;
+    }, 1800);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(restore);
+    };
+  }, []);
+
+  // Fly to the active zone / back home. Skip the first run so it doesn't
+  // stomp the intro's initial framing.
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
 
     const zone = activeSection
       ? ZONES.find((z) => z.id === activeSection)
       : null;
     const { position, lookAt } = zone ? zone.cameraTarget : HOME;
 
-    void controls.setLookAt(
-      position[0],
-      position[1],
-      position[2],
-      lookAt[0],
-      lookAt[1],
-      lookAt[2],
-      true, // animate the transition
-    );
+    void controls.setLookAt(...position, ...lookAt, true);
   }, [activeSection]);
 
   return (
@@ -52,7 +77,7 @@ export default function CameraRig() {
       enabled={activeSection === null}
       smoothTime={0.5}
       minDistance={6}
-      maxDistance={34}
+      maxDistance={38}
       minPolarAngle={0.2}
       maxPolarAngle={Math.PI / 2 - 0.05}
     />

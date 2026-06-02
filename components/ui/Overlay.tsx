@@ -1,29 +1,48 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { SectionId } from "@/types";
 import { usePortfolio } from "@/lib/store";
 import { CONTENT } from "@/lib/content";
 import { ZONE_BY_ID } from "@/lib/zones";
 
 /**
  * DOM content panel for the active section. Reads `activeSection` from the
- * store and slides/fades in. Closes via its button, the Esc key, or clicking
- * empty 3D space (handled by the Canvas's `onPointerMissed`).
+ * store and slides/fades in and out. Closes via its button, the Esc key, or
+ * clicking empty 3D space (handled by the Canvas's `onPointerMissed`).
  *
- * `open` drives the enter transition: the panel mounts closed, then a rAF
- * flips it open next frame so the CSS transition runs. All state updates live
- * inside rAF callbacks to avoid synchronous setState-in-effect. (A graceful
- * exit animation is a Step 6 polish item.)
+ * `shown` retains the last section through the exit transition so the panel
+ * animates out cleanly; `open` drives the enter/exit CSS transition (mounts
+ * closed, a rAF flips it open). All state updates live inside rAF/timeout
+ * callbacks to avoid synchronous setState-in-effect.
  */
 export default function Overlay() {
   const activeSection = usePortfolio((s) => s.activeSection);
   const setActiveSection = usePortfolio((s) => s.setActiveSection);
 
+  const [shown, setShown] = useState<SectionId | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setOpen(activeSection !== null));
-    return () => cancelAnimationFrame(raf);
+    if (activeSection) {
+      // Mount the section closed, then open it on the next frame.
+      let raf2 = 0;
+      const raf1 = requestAnimationFrame(() => {
+        setShown(activeSection);
+        raf2 = requestAnimationFrame(() => setOpen(true));
+      });
+      return () => {
+        cancelAnimationFrame(raf1);
+        if (raf2) cancelAnimationFrame(raf2);
+      };
+    }
+    // Animate out, then unmount after the transition.
+    const raf = requestAnimationFrame(() => setOpen(false));
+    const t = setTimeout(() => setShown(null), 320);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
   }, [activeSection]);
 
   // Esc closes while a section is open.
@@ -36,10 +55,10 @@ export default function Overlay() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeSection, setActiveSection]);
 
-  if (!activeSection) return null;
+  if (!shown) return null;
 
-  const content = CONTENT[activeSection];
-  const accent = ZONE_BY_ID[activeSection].color;
+  const content = CONTENT[shown];
+  const accent = ZONE_BY_ID[shown].color;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:items-center sm:justify-end sm:p-8">

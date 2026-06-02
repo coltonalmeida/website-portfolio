@@ -109,7 +109,7 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 0. ✅ **Write this plan into the repo** — save this document as `IMPLEMENTATION_PLAN.md` in the project root so the Claude Code CLI (or any future session) can read it and resume/act on the work. It is the living spec; check off steps as they land.
 1. ✅ **Scaffold & baseline render** — `create-next-app` (TS, Tailwind, App Router); add `three @react-three/fiber @react-three/drei zustand` (+ dev `leva @types/three`). Render a `<Canvas>` with a single mesh + `OrbitControls`, `dpr={[1,2]}`, to confirm 3D works.
 2. ✅ **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
-3. **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
+3. ✅ **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
 5. **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
 6. **Polish** — intro camera animation, touch/mobile handling, responsive overlay, no-WebGL fallback, strip `leva` from prod, optional postprocessing bloom.
@@ -172,12 +172,23 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
   Note: R3F v9 dropped `GroupProps` — element prop types come from
   `ThreeElements["group"]` now.
 
-**RESUME HERE → Step 3 (Zones + picking):** create `types/index.ts`
-(`SectionId = 'skills'|'projects'|'experience'|'contact'`, `ZoneConfig` =
-`{ id; position; cameraTarget: { position; lookAt }; ... }`), `lib/store.ts`
-(zustand: `activeSection: SectionId | null`, `setActiveSection`), a `ZONES`
-config array (four landmarks near the plateau edges, each with a distinct
-prop cluster), and `components/canvas/Zone.tsx` (a clickable `<group>` with
-hover lift/scale + emissive glow, pointer cursor, `onClick → setActiveSection`).
-Render the zones from `Scene.tsx`. Camera fly-to is Step 4; for now clicking
-just sets the store.
+- **Step 3 — Done.** Zones + picking. `types/index.ts` (`SectionId`, `CameraTarget`,
+  `ZoneConfig`); `lib/store.ts` (zustand: `activeSection` + `hoveredSection` and
+  setters); `lib/zones.ts` (`ZONES` — four landmarks at the cardinal plateau edges
+  with accent colors and per-zone `cameraTarget`). `components/canvas/Zone.tsx`:
+  outer group fixed at the zone position owns pointer events; an inner group
+  animates a hover/active lift + scale via `MathUtils.damp` in `useFrame` (mutated
+  by ref, not props); hover sets pointer cursor + `hoveredSection`; click sets the
+  active section. Four distinct low-poly clusters (workbench, building cluster,
+  stacked platforms+flag, lighthouse) with an emissive accent that glows on
+  hover/active. `Scene.tsx` renders the zones; clicking the island ground or
+  empty space (`Canvas onPointerMissed`) deselects. Build clean.
+
+**RESUME HERE → Step 4 (Camera rig):** create `components/canvas/CameraRig.tsx`
+using drei `CameraControls` (`makeDefault`). On `activeSection` change, run an
+effect: if a section is active, `controls.setLookAt(...camPos, ...lookAt, true)`
+to that zone's `cameraTarget` and disable orbiting (lock); if null, fly back to
+the default home framing and re-enable orbit. Replace `OrbitControls` in
+`Experience.tsx` with `CameraRig` (keep the home position/target as constants —
+reuse [13,9,13] / [0,1.4,0]). Verify each zone click flies the camera in and a
+deselect returns home.

@@ -263,6 +263,29 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
 **Step 6 complete — the night-Toronto scene is live and polished.** Dev server is
 left running at http://localhost:3000 for review.
 
+- **Step 6b — Done (review rework).** Bigger map + new landmarks + world fixes:
+  - **Sky/sea:** `Environment` gained a gradient **sky dome** (zenith→horizon
+    glow) and a visible **custom starfield** (the old drei `<Stars>` were washed
+    out by fog); fog retuned so **Lake Ontario blends into the horizon** instead
+    of ending abruptly (enlarged reflector).
+  - **Map/roads:** `Island` platform enlarged to 36×25 with a proper **street
+    grid** — sidewalks, lane dashes, **crosswalks**.
+  - **CN Tower:** taller, more iconic proportions; now an **ambient centerpiece**
+    rendered from `City` at `TOWER_POSITION`.
+  - **Landmarks re-mapped:** Experience → **Union Station + GO train**
+    (`UnionStation.tsx`), and its overlay now renders a **roles timeline**;
+    Projects → **building under construction** (`Construction.tsx` — crane,
+    scaffolding, netting, work lights); Skills → **scrolling LED ticker** wrapped
+    on the CN Tower (`SkillsTicker.tsx` + `lib/tickerTexture.ts`, `noLift` zone);
+    Contact → **ferry dock** with a moored Toronto Island ferry
+    (`WaterfrontDock.tsx`).
+  - **Wiring:** `lib/zones.ts` remapped (+`TOWER_POSITION`, `noLift` on
+    `ZoneConfig`); `City` spreads ambient buildings + streetcar + props across the
+    bigger grid; `CameraRig` HOME/intro reframed (maxDistance 60); content
+    taglines updated. `tsc` + lint + production build clean; screenshots refreshed
+    (note: the marquee/ticker text is decorative — the accessible Skills content
+    still lives in the DOM overlay, per the no-3D-text rule).
+
 **RESUME HERE → Step 7 (Deploy), when ready:** write a short `README.md` (what it
 is, stack, `npm run dev` / `npm run build`, the `useGLTF` + `lib/content.ts` swap
 points, how to regenerate screenshots), do a final `npm run build`, then deploy to

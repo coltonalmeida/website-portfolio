@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import Scene from "./Scene";
 import CameraRig, { HOME } from "./CameraRig";
@@ -21,7 +22,9 @@ export default function Experience() {
       className="h-full w-full"
       onPointerMissed={() => setActiveSection(null)}
     >
-      <Scene />
+      <Suspense fallback={null}>
+        <Scene />
+      </Suspense>
       <CameraRig />
     </Canvas>
   );

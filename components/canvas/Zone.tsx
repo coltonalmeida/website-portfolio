@@ -17,11 +17,13 @@ export default function Zone({ config }: { config: ZoneConfig }) {
   const [hovered, setHovered] = useState(false);
 
   const activeSection = usePortfolio((s) => s.activeSection);
+  const hoveredSection = usePortfolio((s) => s.hoveredSection);
   const setActiveSection = usePortfolio((s) => s.setActiveSection);
   const setHoveredSection = usePortfolio((s) => s.setHoveredSection);
 
   const isActive = activeSection === config.id;
-  const lifted = hovered || isActive;
+  // Lift on direct 3D hover, when this section is hovered in the nav, or active.
+  const lifted = hovered || hoveredSection === config.id || isActive;
 
   useFrame((_, delta) => {
     const g = innerRef.current;

@@ -111,7 +111,7 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 2. ✅ **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
 3. ✅ **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. ✅ **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
-5. **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
+5. ✅ **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
 6. **Polish** — intro camera animation, touch/mobile handling, responsive overlay, no-WebGL fallback, strip `leva` from prod, optional postprocessing bloom.
 7. **Deploy** — `npm run build` clean (no type errors), verify locally, then deploy to Vercel; add a short `README.md`.
 
@@ -195,12 +195,27 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
   `HOME.position`. Build clean; dev serves 200 with no runtime errors. (Camera
   motion itself is best confirmed visually in Step 6's polish/QA pass.)
 
-**RESUME HERE → Step 5 (Overlay + content + nav):** create `lib/content.ts`
-(`Record<SectionId, { title; body; items[] }>` placeholders), `components/ui/
-Overlay.tsx` (DOM panel bound to `activeSection`, Tailwind-styled, with a close
-button + Esc handler — empty-space click already deselects via the Canvas),
-`components/ui/Nav.tsx` (four real `<button>`s calling `setActiveSection`, the
-keyboard/no-WebGL fallback, synced with `hoveredSection`), and `components/ui/
-Loader.tsx` (drei `useProgress` preloader). Wrap `<Scene>` in `<Suspense>` and
-mount `Overlay`/`Nav` as DOM siblings of the Canvas in `app/page.tsx`. After
-this, STOP and summarize for the Step 6 design-polish pass.
+- **Step 5 — Done.** Overlay + content + nav. `lib/content.ts` (`CONTENT:
+  Record<SectionId, { title; tagline; body; items[] }>` placeholders — swap point
+  for real copy). `lib/zones.ts` gained `ZONE_BY_ID` for accent/label lookup.
+  `components/ui/Overlay.tsx`: accent-themed DOM panel bound to `activeSection`,
+  enter slide+fade, close button + Esc; renders directly off the store (all
+  setState inside rAF to satisfy `react-hooks/set-state-in-effect`).
+  `components/ui/Nav.tsx`: header (name + hint) + four real `<button>`s
+  (`aria-pressed`, toggle active, hover/focus → `hoveredSection`) — the
+  keyboard/no-WebGL fallback. `Zone.tsx` now also lifts when its section is
+  hovered in the nav. `components/ui/Loader.tsx`: drei `useProgress` preloader
+  (seam for GLB/textures). `Scene` wrapped in `<Suspense>`; `app/page.tsx` mounts
+  Nav/Overlay/Loader as DOM siblings of the Canvas. Build + lint clean; dev serves
+  200 and SSRs the nav (accessible fallback present without WebGL).
+
+**A working, usable product is complete (Steps 1–5).** Per the build instructions,
+STOP here for the Step 6 design-polish pass to be done together.
+
+**RESUME HERE → Step 6 (Polish), when ready:** intro camera animation on first
+load; graceful exit animation for the overlay (retain last section through the
+out-transition); explicit no-WebGL fallback message; touch/mobile tuning
+(overlay as a bottom sheet, larger tap targets, pinch/orbit feel); responsive
+overlay sizing; optional `leva` dev controls (gated to dev only — do NOT ship to
+prod) and/or postprocessing bloom on the emissive accents. Then Step 7: final
+`npm run build`, write `README.md`, and deploy to Vercel (deploy only when asked).

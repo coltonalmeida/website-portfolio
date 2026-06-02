@@ -1,4 +1,4 @@
-import type { ZoneConfig } from "@/types";
+import type { SectionId, ZoneConfig } from "@/types";
 import { GRASS_TOP } from "@/components/canvas/Island";
 
 /**
@@ -49,3 +49,9 @@ export const ZONES: ZoneConfig[] = [
     },
   },
 ];
+
+/** Quick id → config lookup for UI (overlay/nav accent theming, labels). */
+export const ZONE_BY_ID: Record<SectionId, ZoneConfig> = Object.fromEntries(
+  ZONES.map((z) => [z.id, z]),
+) as Record<SectionId, ZoneConfig>;
+

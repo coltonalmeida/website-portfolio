@@ -106,8 +106,8 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 
 ## Build Sequence
 
-0. **Write this plan into the repo** — save this document as `IMPLEMENTATION_PLAN.md` in the project root so the Claude Code CLI (or any future session) can read it and resume/act on the work. It is the living spec; check off steps as they land.
-1. **Scaffold & baseline render** — `create-next-app` (TS, Tailwind, App Router); add `three @react-three/fiber @react-three/drei zustand` (+ dev `leva @types/three`). Render a `<Canvas>` with a single mesh + `OrbitControls`, `dpr={[1,2]}`, to confirm 3D works.
+0. ✅ **Write this plan into the repo** — save this document as `IMPLEMENTATION_PLAN.md` in the project root so the Claude Code CLI (or any future session) can read it and resume/act on the work. It is the living spec; check off steps as they land.
+1. ✅ **Scaffold & baseline render** — `create-next-app` (TS, Tailwind, App Router); add `three @react-three/fiber @react-three/drei zustand` (+ dev `leva @types/three`). Render a `<Canvas>` with a single mesh + `OrbitControls`, `dpr={[1,2]}`, to confirm 3D works.
 2. **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
 3. **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
 4. **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
@@ -140,3 +140,30 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 - Real `.glb` island/landmark models replace primitives later via the `useGLTF` seam — no interaction rewiring.
 - Real portfolio copy/projects/links swap into `lib/content.ts`.
 - Optional niceties (audio toggle, postprocessing bloom, particles) deferred to a polish pass.
+
+---
+
+## Progress Log
+
+Stack as built: Next.js **16.2.7** (App Router, Turbopack), React **19.2.4**,
+TypeScript, Tailwind **v4**. 3D deps: `three@0.184`, `@react-three/fiber@9`,
+`@react-three/drei@10`, `zustand@5`. Dev: `@types/three`. `leva` deferred to
+Step 6 (polish) to avoid React 19 peer-dep friction — it's optional anyway.
+Layout note: scaffolded into `scaffold-tmp/` then moved to root (root was
+non-empty, so `create-next-app` couldn't target it directly); root `CLAUDE.md`
+preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
+
+- **Step 0 — Done.** Plan committed; git repo initialized.
+- **Step 1 — Done.** Scaffold + baseline render. `components/canvas/Experience.tsx`
+  renders a `<Canvas dpr={[1,2]} shadows>` with a flat-shaded spinning box,
+  ambient + directional light, and `OrbitControls` (damping, `makeDefault`).
+  `app/page.tsx` mounts it full-screen; `globals.css` locks the viewport
+  (height 100%, no scroll). `npm run build` is clean.
+
+**RESUME HERE → Step 2 (Island + environment):** create
+`components/canvas/Scene.tsx` (world assembly), `components/canvas/Island.tsx`
+(low-poly flat-shaded terrain — beveled disc / displaced plane, `useGLTF`-ready
+seam), and `components/canvas/Environment.tsx` (hemisphere + directional light,
+light fog, flat sky/background). Wire `Scene` into `Experience.tsx` replacing the
+placeholder `SpinningBox`, and set a sensible default camera framing. Keep
+`OrbitControls` for now (swapped for `CameraRig` in Step 4).

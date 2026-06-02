@@ -110,7 +110,7 @@ The GLB seam: `Island`/`Zone` accept an optional model URL and use drei `useGLTF
 1. ✅ **Scaffold & baseline render** — `create-next-app` (TS, Tailwind, App Router); add `three @react-three/fiber @react-three/drei zustand` (+ dev `leva @types/three`). Render a `<Canvas>` with a single mesh + `OrbitControls`, `dpr={[1,2]}`, to confirm 3D works.
 2. ✅ **Island + environment** — terrain geometry, flat-shaded materials, lights, fog, background, sensible default camera framing.
 3. ✅ **Zones + picking** — add the four landmark components with `ZoneConfig` metadata; hover highlight + pointer cursor; `onClick` → store.
-4. **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
+4. ✅ **Camera rig** — `CameraRig` with `CameraControls`; effect on `activeSection` flies to the zone target or returns home; lock orbit while focused.
 5. **Overlay + content + nav** — `Overlay.tsx` bound to `content.ts`, open/close via store (button/Esc/empty-click); `Nav.tsx` fallback buttons; `Suspense` + `Loader`.
 6. **Polish** — intro camera animation, touch/mobile handling, responsive overlay, no-WebGL fallback, strip `leva` from prod, optional postprocessing bloom.
 7. **Deploy** — `npm run build` clean (no type errors), verify locally, then deploy to Vercel; add a short `README.md`.
@@ -184,11 +184,23 @@ preserved, scaffold's generated `CLAUDE.md`/`AGENTS.md` discarded.
   hover/active. `Scene.tsx` renders the zones; clicking the island ground or
   empty space (`Canvas onPointerMissed`) deselects. Build clean.
 
-**RESUME HERE → Step 4 (Camera rig):** create `components/canvas/CameraRig.tsx`
-using drei `CameraControls` (`makeDefault`). On `activeSection` change, run an
-effect: if a section is active, `controls.setLookAt(...camPos, ...lookAt, true)`
-to that zone's `cameraTarget` and disable orbiting (lock); if null, fly back to
-the default home framing and re-enable orbit. Replace `OrbitControls` in
-`Experience.tsx` with `CameraRig` (keep the home position/target as constants —
-reuse [13,9,13] / [0,1.4,0]). Verify each zone click flies the camera in and a
-deselect returns home.
+- **Step 4 — Done.** Camera rig. `components/canvas/CameraRig.tsx` uses drei
+  `CameraControls` (`makeDefault`, ref typed via `ComponentRef<typeof
+  CameraControls>`). An effect on `activeSection` calls `setLookAt(...camPos,
+  ...lookAt, true)` — flies to the focused zone's `cameraTarget`, or back to the
+  exported `HOME` framing on deselect. Orbiting locks while focused
+  (`enabled={activeSection === null}`); distance/polar limits preserved;
+  `smoothTime={0.5}` for a cinematic glide. `Experience.tsx` now renders
+  `<CameraRig />` instead of `OrbitControls` and seeds the Canvas camera from
+  `HOME.position`. Build clean; dev serves 200 with no runtime errors. (Camera
+  motion itself is best confirmed visually in Step 6's polish/QA pass.)
+
+**RESUME HERE → Step 5 (Overlay + content + nav):** create `lib/content.ts`
+(`Record<SectionId, { title; body; items[] }>` placeholders), `components/ui/
+Overlay.tsx` (DOM panel bound to `activeSection`, Tailwind-styled, with a close
+button + Esc handler — empty-space click already deselects via the Canvas),
+`components/ui/Nav.tsx` (four real `<button>`s calling `setActiveSection`, the
+keyboard/no-WebGL fallback, synced with `hoveredSection`), and `components/ui/
+Loader.tsx` (drei `useProgress` preloader). Wrap `<Scene>` in `<Suspense>` and
+mount `Overlay`/`Nav` as DOM siblings of the Canvas in `app/page.tsx`. After
+this, STOP and summarize for the Step 6 design-polish pass.

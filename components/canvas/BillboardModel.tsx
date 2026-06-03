@@ -1,22 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useMemo } from "react";
 import * as THREE from "three";
 
 /**
- * A freestanding billboard whose screen shows a lit **"TORONTO" neon sign** — a
- * dark panel with a bold wordmark, a red maple-leaf accent, and a small tagline
- * — applied as an emissive map so it reads as a glowing sign at night. (Replaces
- * the old placeholder lorem-ipsum card.) Built from primitives so it grounds
- * cleanly and faces forward (aim it with the parent `rotation`).
+ * The Skills landmark: a freestanding **billboard** whose screen shows a lit
+ * "TORONTO" neon card — a dark panel with a bold wordmark, a red maple-leaf
+ * accent, and a small tagline, applied as an emissive map so it reads as a
+ * glowing sign at night. Built from primitives so it grounds cleanly and faces
+ * forward (+Z by default; aim it with the parent `rotation`).
+ *
+ * `glow` (hover/active, supplied by the wrapping `Zone`) brightens the screen +
+ * spill light. The `Zone` owns the pointer events and the hover lift, so this
+ * component is purely visual.
  */
-const SCREEN_W = 3.4;
-const SCREEN_H = 2.0;
-const SCREEN_Y = 2.6; // centre height of the screen
+const SCREEN_W = 3.7;
+const SCREEN_H = 1.6;
+const SCREEN_Y = 2.1; // centre height of the screen
 
-/** Draw a clean Toronto neon sign onto a canvas → emissive texture. */
+/** Draw a clean neon "SKILLS" card onto a canvas → emissive texture. */
 function useCardTexture(): THREE.CanvasTexture {
   return useMemo(() => {
-    const W = 768;
+    const W = 1024;
     const H = 448;
     const c = document.createElement("canvas");
     c.width = W;
@@ -45,15 +48,15 @@ function useCardTexture(): THREE.CanvasTexture {
     // Maple-leaf accent above the wordmark.
     drawMapleLeaf(ctx, W / 2, y + 96, 52, "#ff3b4d");
 
-    // "TORONTO" wordmark — warm neon.
+    // "SKILLS" wordmark — warm neon.
     ctx.fillStyle = "#ffe9bf";
-    ctx.font = "800 96px Arial, sans-serif";
-    ctx.fillText("TORONTO", W / 2, y + 250);
+    ctx.font = "800 112px Arial, sans-serif";
+    ctx.fillText("SKILLS", W / 2, y + 252);
 
     // Tagline.
     ctx.fillStyle = "#9fb3c8";
     ctx.font = "600 30px Arial, sans-serif";
-    ctx.fillText("THE SIX · ONTARIO, CANADA", W / 2, y + 320);
+    ctx.fillText("WHAT'S IN MY TOOLKIT", W / 2, y + 322);
 
     ctx.textAlign = "left";
 
@@ -92,100 +95,46 @@ function drawMapleLeaf(
 }
 
 export default function BillboardModel({
-  position,
+  position = [0, 0, 0],
   rotation = 0,
   scale = 1,
+  glow = 0,
 }: {
-  position: [number, number, number];
+  position?: [number, number, number];
   rotation?: number;
   scale?: number;
+  glow?: number;
 }) {
   const card = useCardTexture();
   const frameInset = 0.12;
 
-  // Same "pop + glow" interaction the landmark zones use: on hover the whole
-  // sign lifts + scales a touch and the screen/spill light brighten. Animated
-  // by ref in useFrame (never via React props), matching `Zone`.
-  const inner = useRef<THREE.Group>(null);
-  const screen = useRef<THREE.MeshStandardMaterial>(null);
-  const spill = useRef<THREE.PointLight>(null);
-  const [hovered, setHovered] = useState(false);
-
-  useFrame((_, delta) => {
-    const g = inner.current;
-    if (g) {
-      g.position.y = THREE.MathUtils.damp(g.position.y, hovered ? 0.25 : 0, 9, delta);
-      const s = THREE.MathUtils.damp(g.scale.x, hovered ? 1.06 : 1, 9, delta);
-      g.scale.setScalar(s);
-    }
-    if (screen.current) {
-      screen.current.emissiveIntensity = THREE.MathUtils.damp(
-        screen.current.emissiveIntensity,
-        hovered ? 1.8 : 0.9,
-        8,
-        delta,
-      );
-    }
-    if (spill.current) {
-      spill.current.intensity = THREE.MathUtils.damp(
-        spill.current.intensity,
-        hovered ? 7 : 3,
-        8,
-        delta,
-      );
-    }
-  });
-
-  useEffect(() => {
-    if (!hovered) return;
-    document.body.style.cursor = "pointer";
-    return () => {
-      document.body.style.cursor = "auto";
-    };
-  }, [hovered]);
-
   return (
-    <group
-      position={position}
-      rotation={[0, rotation, 0]}
-      scale={scale}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-      }}
-      onPointerOut={(e) => {
-        e.stopPropagation();
-        setHovered(false);
-      }}
-    >
-      <group ref={inner}>
-        {/* Two support posts from the ground up to the screen. */}
-        {[-SCREEN_W * 0.3, SCREEN_W * 0.3].map((x) => (
-          <mesh key={x} position={[x, SCREEN_Y - SCREEN_H / 2 - 0.6, -0.06]} castShadow>
-            <boxGeometry args={[0.16, (SCREEN_Y - SCREEN_H / 2) + 0.6, 0.16]} />
-            <meshStandardMaterial color="#1c2530" flatShading roughness={1} />
-          </mesh>
-        ))}
-        {/* Frame behind the screen. */}
-        <mesh position={[0, SCREEN_Y, -0.05]} castShadow>
-          <boxGeometry args={[SCREEN_W + frameInset, SCREEN_H + frameInset, 0.12]} />
-          <meshStandardMaterial color="#10161f" flatShading roughness={1} />
+    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
+      {/* Two support posts from the ground up to the screen. */}
+      {[-SCREEN_W * 0.3, SCREEN_W * 0.3].map((x) => (
+        <mesh key={x} position={[x, SCREEN_Y - SCREEN_H / 2 - 0.6, -0.06]} castShadow>
+          <boxGeometry args={[0.16, SCREEN_Y - SCREEN_H / 2 + 0.6, 0.16]} />
+          <meshStandardMaterial color="#1c2530" flatShading roughness={1} />
         </mesh>
-        {/* The glowing card screen on the front face. */}
-        <mesh position={[0, SCREEN_Y, 0.02]}>
-          <planeGeometry args={[SCREEN_W, SCREEN_H]} />
-          <meshStandardMaterial
-            ref={screen}
-            map={card}
-            emissiveMap={card}
-            emissive="#ffffff"
-            emissiveIntensity={0.9}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* Soft spill light so the sign lights its surroundings. */}
-        <pointLight ref={spill} position={[0, SCREEN_Y, 1.2]} intensity={3} distance={7} color="#cfe0ff" />
-      </group>
+      ))}
+      {/* Frame behind the screen. */}
+      <mesh position={[0, SCREEN_Y, -0.05]} castShadow>
+        <boxGeometry args={[SCREEN_W + frameInset, SCREEN_H + frameInset, 0.12]} />
+        <meshStandardMaterial color="#10161f" flatShading roughness={1} />
+      </mesh>
+      {/* The glowing card screen on the front face. */}
+      <mesh position={[0, SCREEN_Y, 0.02]}>
+        <planeGeometry args={[SCREEN_W, SCREEN_H]} />
+        <meshStandardMaterial
+          map={card}
+          emissiveMap={card}
+          emissive="#ffffff"
+          emissiveIntensity={0.9 + glow * 0.9}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Soft spill light so the sign lights its surroundings. */}
+      <pointLight position={[0, SCREEN_Y, 1.2]} intensity={3 + glow * 4} distance={7} color="#cfe0ff" />
     </group>
   );
 }

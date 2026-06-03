@@ -20,9 +20,6 @@ export default function Nav() {
         <h1 className="text-lg font-semibold tracking-tight text-white drop-shadow">
           Colton Almeida
         </h1>
-        <p className="text-xs text-white/70 drop-shadow">
-          Toronto at night — click a landmark or use the menu
-        </p>
       </div>
 
       <nav aria-label="Sections" className="pointer-events-auto">

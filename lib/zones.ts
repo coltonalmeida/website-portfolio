@@ -3,8 +3,7 @@ import type { Vector3Tuple } from "three";
 import { GROUND_Y } from "@/components/canvas/Island";
 
 /**
- * The CN Tower's footprint — the skyline centerpiece. The Skills ticker wraps
- * its shaft here, so the Skills zone shares this position.
+ * The CN Tower's footprint — the skyline centerpiece (ambient, non-interactive).
  */
 export const TOWER_POSITION: Vector3Tuple = [0, GROUND_Y, -5];
 
@@ -12,7 +11,7 @@ export const TOWER_POSITION: Vector3Tuple = [0, GROUND_Y, -5];
  * The four landmark zones on the (bigger) Toronto map:
  *   Experience → Union Station + GO train ·
  *   Projects → building under construction ·
- *   Skills → LED ticker wrapped on the CN Tower ·
+ *   Skills → the "TORONTO" sign in the plaza ·
  *   Contact → waterfront ferry dock.
  */
 export const ZONES: ZoneConfig[] = [
@@ -41,12 +40,13 @@ export const ZONES: ZoneConfig[] = [
   {
     id: "skills",
     label: "Skills",
-    position: TOWER_POSITION,
-    color: "#ffb454", // amber LED ticker
-    noLift: true,
+    // The "TORONTO" billboard, standing in the plaza south of the CN Tower (just
+    // clear of the waterfront avenue).
+    position: [-1, GROUND_Y, -0.3],
+    color: "#ffcf6b", // warm neon billboard accent
     cameraTarget: {
-      position: [6.5, 6.5, 4.5],
-      lookAt: [0, 5, -5],
+      position: [-1, 2.7, 8.5],
+      lookAt: [-1, 2.0, -0.3],
     },
   },
   {

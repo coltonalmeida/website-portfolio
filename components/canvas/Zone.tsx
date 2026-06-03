@@ -6,7 +6,7 @@ import type { SectionId, ZoneConfig } from "@/types";
 import { usePortfolio } from "@/lib/store";
 import UnionStation from "./UnionStation";
 import Construction from "./Construction";
-import SkillsTicker from "./SkillsTicker";
+import BillboardModel from "./BillboardModel";
 import WaterfrontDock from "./WaterfrontDock";
 
 /**
@@ -16,7 +16,7 @@ import WaterfrontDock from "./WaterfrontDock";
  * the active section; the camera fly-to reacts in `CameraRig`.
  *
  * Landmarks: Experience = Union Station + train · Projects = construction site ·
- * Skills = LED ticker on the CN Tower (no lift) · Contact = ferry dock.
+ * Skills = the "TORONTO" billboard · Contact = ferry dock.
  */
 export default function Zone({ config }: { config: ZoneConfig }) {
   const innerRef = useRef<Group>(null);
@@ -82,7 +82,7 @@ function Landmark({ id, glow }: { id: SectionId; glow: number }) {
     case "projects":
       return <Construction glow={glow} />;
     case "skills":
-      return <SkillsTicker />;
+      return <BillboardModel glow={glow} />;
     case "contact":
       return <WaterfrontDock glow={glow} />;
   }

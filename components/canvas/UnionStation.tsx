@@ -76,17 +76,65 @@ export default function UnionStation({ glow = 0 }: { glow?: number }) {
         </mesh>
       ))}
 
-      {/* GO train — locomotive + two coaches along the rail */}
+      {/* GO train — locomotive + two coaches sitting on proper rail track */}
       <group position={[0, 0, 2.4]}>
-        {/* Rails */}
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[9, 1.4]} />
-          <meshStandardMaterial color="#0a0d14" roughness={1} />
-        </mesh>
+        <TrainTrack from={-5.5} to={5.5} gauge={1.1} />
         <TrainCar x={3.2} loco glow={glow} />
         <TrainCar x={0} glow={glow} />
         <TrainCar x={-3.2} glow={glow} />
       </group>
+    </group>
+  );
+}
+
+/**
+ * Heavy-rail track under the GO train: a dark ballast bed, wooden sleepers, and
+ * two steel rails running along the train's length so it reads as sitting on
+ * real track rather than a painted strip.
+ */
+function TrainTrack({
+  from,
+  to,
+  gauge,
+}: {
+  from: number;
+  to: number;
+  gauge: number;
+}) {
+  const length = to - from;
+  const mid = (from + to) / 2;
+  const ties = Math.floor(length / 0.55);
+  return (
+    <group position={[mid, 0, 0]}>
+      {/* Ballast bed */}
+      <mesh position={[0, 0.03, 0]} receiveShadow>
+        <boxGeometry args={[length, 0.06, gauge + 0.5]} />
+        <meshStandardMaterial color="#1a1c22" flatShading roughness={1} />
+      </mesh>
+      {/* Sleepers */}
+      {Array.from({ length: ties }).map((_, i) => {
+        const x = from + (i + 0.5) * (length / ties) - mid;
+        return (
+          <mesh key={i} position={[x, 0.07, 0]} castShadow>
+            <boxGeometry args={[0.12, 0.05, gauge + 0.34]} />
+            <meshStandardMaterial color="#2b2118" flatShading roughness={1} />
+          </mesh>
+        );
+      })}
+      {/* Steel rails */}
+      {[gauge / 2, -gauge / 2].map((dz) => (
+        <mesh key={dz} position={[0, 0.12, dz]}>
+          <boxGeometry args={[length, 0.07, 0.06]} />
+          <meshStandardMaterial
+            color="#8b929c"
+            emissive="#3a4150"
+            emissiveIntensity={0.25}
+            metalness={0.7}
+            roughness={0.35}
+            flatShading
+          />
+        </mesh>
+      ))}
     </group>
   );
 }

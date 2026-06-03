@@ -116,8 +116,12 @@ function Road({
   }
   if (cur < to) spans.push([cur, to]);
 
+  // Suppress centre dashes through the whole crossing AND its crosswalk. The
+  // crosswalk sits at (perp-road half + 0.7 set-back) with ~0.25 bar half-length
+  // (see CROSSWALKS in lib/cityGrid.ts), so its outer edge is ~c.half + 0.95;
+  // clear to c.half + 1.1 so no dash bleeds into the crossing.
   const inCrossing = (p: number) =>
-    sorted.some((c) => Math.abs(p - c.at) < c.half + 0.4);
+    sorted.some((c) => Math.abs(p - c.at) < c.half + 1.1);
 
   const pos: [number, number, number] = horiz ? [mid, 0, along] : [along, 0, mid];
   const slab: [number, number, number] = horiz

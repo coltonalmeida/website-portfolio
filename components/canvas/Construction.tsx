@@ -141,12 +141,9 @@ export default function Construction({ glow = 0 }: { glow?: number }) {
         <meshStandardMaterial color="#b5642a" flatShading roughness={1} />
       </mesh>
 
-      {/* Work light */}
-      <mesh position={[-2.4, 2.6, 2.2]}>
-        <boxGeometry args={[0.3, 0.22, 0.12]} />
-        <meshStandardMaterial color="#fff3d6" emissive="#fff0c0" emissiveIntensity={1.9 + glow * 0.6} />
-      </mesh>
-      <pointLight position={[-2, 3, 2.6]} intensity={2.4 + glow * 3} distance={9} color="#ffe7b0" />
+      {/* Grounded work light by the shipping container — keeps the lot lit
+          without a glowing box floating in mid-air. */}
+      <pointLight position={[-3, 1.2, 1.5]} intensity={2.0 + glow * 2.5} distance={8} color="#ffe7b0" />
     </group>
   );
 }

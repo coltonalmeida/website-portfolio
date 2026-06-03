@@ -318,6 +318,115 @@ left running at http://localhost:3000 for review.
     the SMAA pass) render slowly under software WebGL/SwiftShader but are fine on
     a real GPU.
 
+- **Step 6d — Done (scene review tweaks).** Worked Colton's six-item punch list:
+  1. **Removed the TTC streetcar + its tram tracks** from the main avenue
+     (`City` — deleted the `Streetcar`/`StreetcarTrack` render + defs).
+  2. **Proper heavy-rail track under the GO train** (`UnionStation` — new
+     `TrainTrack`: ballast bed, wooden sleepers, two steel rails) replacing the
+     old flat painted strip.
+  3. **Made the sign proper** — new `TorontoSign.tsx`: the iconic Nathan Phillips
+     Square multicolour **3D "TORONTO" letters** (extruded box strokes, only T/O/R/N
+     are unique glyphs) on a lit plinth, replacing the old canvas-texture
+     billboard (`BillboardModel.tsx` deleted).
+  4. **Skills landmark is now the TORONTO sign** (was the invisible CN-Tower
+     ticker region). `Zone` renders `TorontoSign`; `lib/zones.ts` skills zone moved
+     to the plaza south of the tower `[-1,0,-0.3]` with a new camera framing and no
+     more `noLift`; `SkillsTicker.tsx` + `lib/tickerTexture.ts` deleted. CN Tower
+     stays as the ambient centerpiece. Overlay tagline → "Nathan Phillips Square".
+  5. **More buildings** — added deep-north skyline backdrop + NW/NE clusters and
+     extra midtown/waterfront fillers in `lib/cityGrid.ts` `DISTRICTS`; reserved the
+     sign plaza so ambient towers stay clear of it.
+  6. **More street props** (`City`) — fire hydrants, trash cans, planters,
+     bollards lining the plaza, newspaper boxes, a glass TTC **bus shelter**, and a
+     **hot dog cart**, all hand-placed on sidewalks clear of roads/landmarks.
+  `tsc` + `npm run lint` + `npm run build` all clean; **screenshots refreshed** in
+  `screenshots/` (desktop default + 4 zones, mobile default + projects).
+
+- **Step 6e — Done (sign revert + GLB signals/streetlights + 4-way crossings).**
+  Second review pass from Colton:
+  1. **Reverted the Skills sign to the old billboard look** — restored
+     `BillboardModel.tsx` (canvas neon "TORONTO" panel on posts) as a
+     `glow`-driven landmark (the wrapping `Zone` owns pointer/lift), deleted the
+     3D-letter `TorontoSign.tsx`, repointed the `skills` zone case, and tightened
+     the skills `cameraTarget`. CN Tower stays ambient.
+  2. **Crosswalks on all four sides** — `lib/cityGrid.ts` `CROSSWALKS` now emits
+     the east + south legs as well as west + north, so every intersection has a
+     full set (`Island.tsx` renders them unchanged, data-driven).
+  3. **Real GLB traffic signals, one-way** — new `TrafficSignal.tsx` isolates the
+     `Traffic Signal_67` mast-arm subtree from `public/models/traffic-signal.glb`
+     (Sketchfab "Traffic Lights (animation) – free"; the file ships **no baked
+     animation**, so the cycle is driven in `useFrame`). Lenses are matched by
+     source material name (`Material.003/004/005` = red/amber/green), tagged on
+     `material.userData.role`, and animated through the rendered object's ref
+     (mutating a `useMemo` result trips the React-Compiler immutability rule —
+     reach materials via a JSX ref instead, like `CNTower`). `lib/cityGrid.ts`
+     gained one-way `oneway` dirs on every `RoadSeg`, an `INTERSECTIONS` list, and
+     a derived `SIGNALS` list that places one mast-arm per one-way approach at the
+     two front avenues' intersections, facing oncoming traffic, with avenue/street
+     phases opposed. Replaced the old `road-traffic-pack` `TrafficLight.tsx`
+     (deleted).
+  4. **GLB street lamps, mid-block** — new `StreetLight.tsx` isolates a chosen
+     `Farola…` variant from `public/models/street-lights.glb` (Sketchfab low-poly
+     street-lights pack), auto-scales every variant to a common height, and glows
+     the `white_emiting` head. `City.tsx` replaced the procedural `Lamp`/`LAMPS`
+     with a deterministic **mix** of variants placed along every road's curbs,
+     skipping intersections (those get signals) and the landmark plazas; a subset
+     cast real point lights to keep the light count sane.
+  `tsc` + lint + `npm run build` all clean. Verified via Playwright screenshots
+  (incl. throwaway camera-controls hook for intersection close-ups, since removed):
+  billboard restored, 4-leg crossings, mast-arm signals spanning the roads with
+  lit cycling lenses, and GLB lamps lining the mid-blocks. Two new GLBs copied
+  into `public/models/` (`street-lights.glb`, `traffic-signal.glb`); both are
+  Sketchfab CC-BY exports — attribution noted in each component (no licence file
+  shipped). Note: `road-traffic-pack.glb` is now unused but left in `public/models`.
+
+- **Step 6f — Done (fix leaked street models + lamp/light/billboard polish).**
+  - **Root-cause fix (the "weird road models"):** `TrafficSignal` looked the GLB
+    node up as `"Traffic Signal_67"`, but Three's GLTFLoader sanitizes names
+    (spaces → `_`), so the real name is `Traffic_Signal_67`. The lookup failed and
+    the old `signal ?? clone` fallback kept the **entire** GLB — a full modular
+    street scene — drawing road/sidewalk pieces at all 8 signal spots. Fixed to use
+    the sanitized name, a `/signal/i` traversal fallback, and **never** the whole
+    scene (returns an empty group if not found). This also corrects signal
+    scale/placement (bbox was being measured off the whole street). `StreetLight`
+    got the same defensive guard.
+  - **Lamps:** `StreetLight` `TARGET_H` 3.2 → 2.2 (shorter); `City` `STREET_LIGHTS`
+    now skips any lamp whose footprint overlaps a `BUILDINGS`/`HEROES` box
+    (`insideBuilding`), so lamps no longer clip through buildings.
+  - **Construction:** removed the unsupported floating "work light" emissive box;
+    its point light is grounded by the shipping container instead.
+  - **Skills billboard:** wordmark `TORONTO` → **`SKILLS`**, tagline →
+    `WHAT'S IN MY TOOLKIT` (canvas widened to 1024px); panel widened
+    (`SCREEN_W` 3.4 → 4.6); `lib/zones.ts` skills camera pulled back to frame it.
+  - Crosswalks were already correct 4-sided primitives (no change). `tsc` + lint +
+    build clean; screenshots refreshed — intersection close-ups confirm clean
+    primitive roads with full 4-leg crossings and the isolated mast-arm signal, no
+    stray street geometry.
+
+- **Step 6g — Done (dash bleed + on-road props).**
+  - **Centre-line dashes no longer bleed into crossings:** `Island.tsx` `Road`
+    widened the dash-suppression margin from `c.half + 0.4` to `c.half + 1.1` so
+    yellow dashes stop short of every intersection and its crosswalk (the crosswalk
+    sits at `c.half + 0.7` set-back + ~0.25 bar). Dashes still run normally along
+    open road.
+  - **Street furniture off the road** (`City.tsx`): the security `BOLLARDS` (were a
+    row on the waterfront avenue under the Skills sign) now line the **Union Station
+    forecourt** (`z=-0.8`, `x` −23…−15, off every road); the hydrant `{9,3.9}` and
+    trash `{11,3.9}` that sat on the east street (x=10) moved to `x=6.5` / `x=13.5`
+    on the sidewalk; the two sign-flanking planters moved off the avenue edge
+    (`z 0.4 → -0.5`).
+  - `tsc` + lint + build clean; screenshots refreshed — intersection close-ups
+    confirm no dash enters a crosswalk and no prop sits on a road.
+
+- **Step 6h — Done (remove station-front tree + shrink Skills billboard).**
+  - Removed the `TREES` entry `{x:-11,z:6.4}` (`City.tsx`) — the conifer beside the
+    west waterfront crosswalk in front of Union Station; other trees kept.
+  - Shrank the Skills billboard (`BillboardModel.tsx`): `SCREEN_W` 4.6→3.7,
+    `SCREEN_H` 2.0→1.6, `SCREEN_Y` 2.6→2.1 (keeps the wider aspect + crisp canvas);
+    reframed the `skills` `cameraTarget` (`lib/zones.ts`) closer/lower.
+  - `tsc` + lint + build clean; screenshots refreshed and matched against the
+    user's references to confirm the right tree was removed.
+
 **RESUME HERE → Step 7 (Deploy), when ready:** write a short `README.md` (what it
 is, stack, `npm run dev` / `npm run build`, the `useGLTF` + `lib/content.ts` swap
 points, how to regenerate screenshots), do a final `npm run build`, then deploy to

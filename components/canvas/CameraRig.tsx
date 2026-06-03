@@ -82,6 +82,9 @@ export default function CameraRig() {
     const { position, lookAt } = zone ? zone.cameraTarget : HOME;
 
     void controls.setLookAt(...position, ...lookAt, true);
+    // Collapse any accumulated orbit spin so the transition takes the shortest
+    // path instead of unwinding every prior full rotation the user dragged.
+    controls.normalizeRotations();
   }, [activeSection]);
 
   return (

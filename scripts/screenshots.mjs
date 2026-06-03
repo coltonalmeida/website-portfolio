@@ -46,25 +46,32 @@ async function capture(context, prefix, { withZones }) {
   });
   console.log(`  ${prefix}: WebGL = ${gl}`);
 
-  await page.screenshot({ path: join(OUT, `${prefix}-01-default.png`) });
-  console.log(`  saved ${prefix}-01-default.png`);
+  // Software WebGL (SwiftShader) renders the heavier zoomed frames slowly, so
+  // give screenshots a generous timeout and never let one failure abort the run.
+  const shoot = async (name) => {
+    try {
+      await page.screenshot({ path: join(OUT, name), timeout: 120000 });
+      console.log(`  saved ${name}`);
+    } catch (e) {
+      console.log(`  FAILED ${name}: ${e.message.split("\n")[0]}`);
+    }
+  };
+
+  await shoot(`${prefix}-01-default.png`);
 
   if (withZones) {
     let i = 2;
     for (const zone of ZONES) {
       await page.getByRole("button", { name: zone, exact: true }).click();
       await sleep(2600); // camera fly + overlay
-      const name = `${prefix}-0${i}-${zone.toLowerCase()}.png`;
-      await page.screenshot({ path: join(OUT, name) });
-      console.log(`  saved ${name}`);
+      await shoot(`${prefix}-0${i}-${zone.toLowerCase()}.png`);
       i++;
     }
   } else {
     // Mobile: just one zone to show the overlay layout.
     await page.getByRole("button", { name: "Projects", exact: true }).click();
     await sleep(2600);
-    await page.screenshot({ path: join(OUT, `${prefix}-02-projects.png`) });
-    console.log(`  saved ${prefix}-02-projects.png`);
+    await shoot(`${prefix}-02-projects.png`);
   }
 
   await page.close();

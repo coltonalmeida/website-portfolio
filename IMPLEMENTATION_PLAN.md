@@ -286,6 +286,38 @@ left running at http://localhost:3000 for review.
     (note: the marquee/ticker text is decorative — the accessible Skills content
     still lives in the DOM overlay, per the no-3D-text rule).
 
+- **Step 6c — Done (lighting & realism polish pass).** Worked the full
+  improvement brief (lighting → windows → landmarks → roofs → props → camera):
+  - **Lighting/atmosphere (`Environment`, `Experience`):** lifted + warmed the
+    ambient/hemisphere floor so mid-distance streets/facades read instead of
+    crushing to black; swapped linear fog for tuned `fogExp2`; added a large
+    fogged **ground/water skirt** so the platform no longer floats over a void on
+    its dark sides. Retuned **Bloom** (intensity 0.9→0.62, threshold 0.2→0.26,
+    radius 0.7→0.55) so the city glows cohesively without clipping, and added an
+    **SMAA** pass.
+  - **Clamped the blowouts:** the stadium GLB darkened (×0.5) with restrained
+    point lights + a warm interior-bowl glow so it reads as a **dome** (Rogers
+    Centre/SkyDome), not a white disc; CN Tower / construction work-light / dock
+    lamp intensities all pulled back.
+  - **Windows (`lib/windowTexture.ts`, `Building`):** per-building **colour
+    temperature** (warm vs cool clusters, no scattered cyan), **clustered dark
+    floors/columns** + lower lit ratio, per-window **brightness variation**, and a
+    recessed **bezel**; fixed aliasing (LinearFilter + mipmaps + anisotropy 16,
+    bigger cells), softened emissive, per-building intensity spread.
+  - **Roofs/landmarks (`Building`, `City`):** rooftop **HVAC** boxes on every
+    tower; **3 unique "hero" towers** (taller, tinted, lit crown band + antenna)
+    in the financial core to break the repeated-box skyline.
+  - **Props/composition (`City`, `BillboardModel`, `CameraRig`):** replaced the
+    placeholder **lorem-ipsum billboard** with a lit **"TORONTO" neon sign +
+    maple leaf**; added a waterfront **park** (denser trees + benches) and small
+    green **light pools** at the traffic signals to fill the dead foreground;
+    lowered the HOME camera. `tsc` + lint + `npm run build` all clean.
+  - **Screenshots refreshed** in `screenshots/` (desktop default + 4 zones,
+    mobile default + projects). Note: `scripts/screenshots.mjs` got a longer
+    per-shot timeout + per-shot try/catch — the heavier zoomed frames (now with
+    the SMAA pass) render slowly under software WebGL/SwiftShader but are fine on
+    a real GPU.
+
 **RESUME HERE → Step 7 (Deploy), when ready:** write a short `README.md` (what it
 is, stack, `npm run dev` / `npm run build`, the `useGLTF` + `lib/content.ts` swap
 points, how to regenerate screenshots), do a final `npm run build`, then deploy to

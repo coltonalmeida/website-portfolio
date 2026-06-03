@@ -54,7 +54,7 @@ export default function Construction({ glow = 0 }: { glow?: number }) {
           <meshStandardMaterial
             color="#10141d"
             emissive="#ffd98a"
-            emissiveIntensity={0.7 + glow}
+            emissiveIntensity={0.6 + glow * 0.6}
             flatShading
           />
         </mesh>
@@ -68,15 +68,15 @@ export default function Construction({ glow = 0 }: { glow?: number }) {
         </mesh>
       ))}
 
-      {/* Safety netting panel (glowing orange) */}
+      {/* Safety netting panel (muted blue site mesh) */}
       <mesh position={[-1.8, 2.2, 0]}>
         <boxGeometry args={[0.05, 4, 3.3]} />
         <meshStandardMaterial
-          color="#ff7a1a"
-          emissive="#ff6a10"
-          emissiveIntensity={0.5}
+          color="#3a5a7a"
+          emissive="#24405e"
+          emissiveIntensity={0.15}
           transparent
-          opacity={0.45}
+          opacity={0.4}
         />
       </mesh>
 
@@ -144,9 +144,9 @@ export default function Construction({ glow = 0 }: { glow?: number }) {
       {/* Work light */}
       <mesh position={[-2.4, 2.6, 2.2]}>
         <boxGeometry args={[0.3, 0.22, 0.12]} />
-        <meshStandardMaterial color="#fff3d6" emissive="#fff0c0" emissiveIntensity={2.5 + glow} />
+        <meshStandardMaterial color="#fff3d6" emissive="#fff0c0" emissiveIntensity={1.9 + glow * 0.6} />
       </mesh>
-      <pointLight position={[-2, 3, 2.6]} intensity={3 + glow * 5} distance={9} color="#ffe7b0" />
+      <pointLight position={[-2, 3, 2.6]} intensity={2.4 + glow * 3} distance={9} color="#ffe7b0" />
     </group>
   );
 }

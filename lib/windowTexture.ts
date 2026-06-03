@@ -21,8 +21,17 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-const WARM = ["#ffd27a", "#ffbb55", "#ffe6ad", "#ffcf8a"];
-const COOL = ["#bfe0ff", "#9fd4ff"];
+const WARM: [number, number, number][] = [
+  [255, 210, 122],
+  [255, 187, 85],
+  [255, 230, 173],
+  [255, 207, 138],
+];
+const COOL: [number, number, number][] = [
+  [191, 224, 255],
+  [159, 212, 255],
+  [205, 232, 255],
+];
 
 export interface WindowTextureOptions {
   cols: number;
@@ -34,15 +43,28 @@ export interface WindowTextureOptions {
   coolChance?: number;
 }
 
+/**
+ * Build the emissive window grid. The key realism moves vs. a flat grid:
+ *  - **Per-building temperature**: a building is mostly warm OR mostly cool
+ *    (disciplined clusters), not randomly-scattered cyan noise.
+ *  - **Clustered darkness**: whole floors and the odd vertical service column
+ *    go dark, on top of per-window off — so it reads as an occupied building,
+ *    not a uniform texture. Lit ratio lands lower than the nominal `litChance`.
+ *  - **Brightness variation**: each lit window is dimmed by a random factor, so
+ *    some rooms are bright and some barely glow.
+ *  - **Recessed bezel**: a dark frame around a slightly-inset bright core gives
+ *    cheap window depth at distance.
+ */
 export function createWindowTexture({
   cols,
   rows,
   seed,
-  litChance = 0.6,
-  coolChance = 0.15,
+  litChance = 0.48,
+  coolChance,
 }: WindowTextureOptions): THREE.CanvasTexture {
-  const cell = 16;
+  const cell = 20;
   const gap = 6;
+  const inset = 2; // bezel thickness inside the cell's lit area
   const w = cols * cell;
   const h = rows * cell;
 
@@ -56,24 +78,52 @@ export function createWindowTexture({
   ctx.fillRect(0, 0, w, h);
 
   const rng = mulberry32(seed);
+
+  // Building-wide temperature: most towers are warm; a minority skew cool. The
+  // chosen building leans hard one way so colour reads as "interior lighting".
+  const buildingCool = rng() < 0.3;
+  const coolP = coolChance ?? (buildingCool ? 0.72 : 0.05);
+
+  // Pre-roll which floors / columns are dark (clustered, not per-window).
+  const darkRow: boolean[] = [];
+  for (let r = 0; r < rows; r++) darkRow[r] = rng() < 0.16;
+  const darkCol: boolean[] = [];
+  for (let c = 0; c < cols; c++) darkCol[c] = rng() < 0.1;
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const lit = rng() < litChance;
+      const lit =
+        !darkRow[r] && !darkCol[c] && rng() < litChance;
+      const x = c * cell + gap / 2;
+      const y = r * cell + gap / 2;
+      const cw = cell - gap;
+      const ch = cell - gap;
+
       if (lit) {
-        const cool = rng() < coolChance;
+        const cool = rng() < coolP;
         const palette = cool ? COOL : WARM;
-        ctx.fillStyle = palette[Math.floor(rng() * palette.length)];
+        const [pr, pg, pb] = palette[Math.floor(rng() * palette.length)];
+        // Per-window brightness: a few bright, most mid, some dim.
+        const b = 0.4 + rng() * 0.6;
+        // Dark bezel frame (no glow), then the brighter inset core.
+        ctx.fillStyle = "#05070d";
+        ctx.fillRect(x, y, cw, ch);
+        ctx.fillStyle = `rgb(${Math.round(pr * b)},${Math.round(pg * b)},${Math.round(pb * b)})`;
+        ctx.fillRect(x + inset, y + inset, cw - inset * 2, ch - inset * 2);
       } else {
-        ctx.fillStyle = "#070a12"; // near-black "off" window
+        ctx.fillStyle = "#06080f"; // near-black "off" window
+        ctx.fillRect(x, y, cw, ch);
       }
-      ctx.fillRect(c * cell + gap / 2, r * cell + gap / 2, cell - gap, cell - gap);
     }
   }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.magFilter = THREE.NearestFilter;
+  // Linear filtering + mipmaps + high anisotropy kills the shimmer/aliasing the
+  // old NearestFilter grid had at distance.
+  tex.magFilter = THREE.LinearFilter;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
-  tex.anisotropy = 4;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 16;
   return tex;
 }

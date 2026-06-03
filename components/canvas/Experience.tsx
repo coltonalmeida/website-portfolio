@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette, SMAA, N8AO } from "@react-three/postprocessing";
 import Scene from "./Scene";
 import CameraRig, { HOME } from "./CameraRig";
 import { usePortfolio } from "@/lib/store";
@@ -48,16 +48,21 @@ export default function Experience() {
       </Suspense>
       <CameraRig />
 
-      {/* Night glow: bloom the emissive windows/lights, plus a soft vignette. */}
-      <EffectComposer enableNormalPass={false} multisampling={4}>
+      {/* Night glow: a tamed bloom so the city glows cohesively instead of
+          clipping to white, SMAA to kill the window aliasing, soft vignette. */}
+      <EffectComposer enableNormalPass={false} multisampling={0}>
+        {/* Subtle AO so the low-poly cylinders/tapers read with contact shading
+            (half-res for perf; gentle so the night scene doesn't go muddy). */}
+        <N8AO halfRes aoRadius={3} distanceFalloff={1} intensity={1.6} />
         <Bloom
-          intensity={0.9}
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
+          intensity={0.62}
+          luminanceThreshold={0.26}
+          luminanceSmoothing={0.85}
           mipmapBlur
-          radius={0.7}
+          radius={0.55}
         />
-        <Vignette eskil={false} offset={0.25} darkness={0.7} />
+        <Vignette eskil={false} offset={0.22} darkness={0.72} />
+        <SMAA />
       </EffectComposer>
     </Canvas>
   );

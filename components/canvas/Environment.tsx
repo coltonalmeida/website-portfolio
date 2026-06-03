@@ -21,16 +21,33 @@ export default function SceneEnvironment() {
   return (
     <>
       <color attach="background" args={[HORIZON]} />
-      <fog attach="fog" args={[HORIZON, 40, 150]} />
+      {/* Exponential height-free fog: a gentle density so distant towers fade
+          and the hard platform edge dissolves into the horizon. */}
+      <fogExp2 attach="fog" args={[HORIZON, 0.0125]} />
 
-      <ambientLight intensity={0.2} color="#5566aa" />
-      <hemisphereLight args={["#27407a", "#05060c", 0.4]} position={[0, 40, 0]} />
+      {/* Sky/ambient floor — lifted so mid-distance streets and facades read
+          instead of crushing to pure black (the old "floating lights" look).
+          Slightly desaturated so the blue tint doesn't fight the warm windows. */}
+      <ambientLight intensity={0.3} color="#5b6486" />
+      <hemisphereLight args={["#2c4170", "#12161f", 0.52]} position={[0, 40, 0]} />
 
-      {/* Moonlight key — cool, high, north-west; casts the scene's shadows. */}
+      {/* Faint cool fill from the south-east so blocks have a little form. */}
+      <directionalLight position={[26, 18, 24]} intensity={0.18} color="#8fa2d8" />
+
+      {/* A large, fogged ground/water skirt around the city so the platform no
+          longer floats over a black void on its dark sides — its far edge
+          dissolves into the matching horizon, same trick as Lake Ontario. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.55, -20]}>
+        <planeGeometry args={[600, 600]} />
+        <meshStandardMaterial color="#0a0f1c" roughness={1} metalness={0} />
+      </mesh>
+
+      {/* Moonlight key — cool, high, north-west; casts the scene's shadows.
+          A touch stronger for crisper shadow contrast on the low-poly forms. */}
       <directionalLight
         position={[-22, 30, -16]}
-        intensity={0.6}
-        color="#cdd6ff"
+        intensity={0.74}
+        color="#d2d8ec"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}

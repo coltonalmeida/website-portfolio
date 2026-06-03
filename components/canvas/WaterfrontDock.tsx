@@ -46,9 +46,9 @@ export default function WaterfrontDock({ glow = 0 }: { glow?: number }) {
         </mesh>
         <mesh position={[0, 1.85, 0]}>
           <sphereGeometry args={[0.16, 10, 10]} />
-          <meshStandardMaterial color="#22d3c5" emissive="#22d3c5" emissiveIntensity={2 + glow * 2} />
+          <meshStandardMaterial color="#22d3c5" emissive="#22d3c5" emissiveIntensity={1.5 + glow * 1.2} />
         </mesh>
-        <pointLight position={[0, 1.85, 0]} intensity={3 + glow * 5} distance={9} color="#22d3c5" />
+        <pointLight position={[0, 1.85, 0]} intensity={2.2 + glow * 3} distance={8} color="#22d3c5" />
       </group>
 
       {/* Canada-Post mailbox */}

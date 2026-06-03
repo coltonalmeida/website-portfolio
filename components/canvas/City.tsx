@@ -13,6 +13,7 @@ import {
   TRAFFIC_LIGHTS,
 } from "@/lib/cityGrid";
 import TrafficLight from "./TrafficLight";
+import BillboardModel from "./BillboardModel";
 
 /**
  * The real Sketchfab CN Tower GLB ("CN Tower" by nidhi3ds, CC-BY) lives at
@@ -70,18 +71,49 @@ const BUILDINGS: BuildingProps[] = DISTRICTS.flatMap((d, di) => {
   return out;
 });
 
+// A handful of unique "hero" towers in the financial core — taller, with a
+// distinct tint, a setback crown and a lit accent band + spire — so the skyline
+// has landmarks instead of one repeated box. Hand-placed in spots clear of the
+// roads/reserved landmark footprints.
+const HEROES: {
+  position: [number, number, number];
+  height: number;
+  foot: number;
+  seed: number;
+  tint: string;
+  accent: string;
+}[] = [
+  { position: [-2.5, 0, -16], height: 14, foot: 2.4, seed: 4201, tint: "#15110b", accent: "#ffcf6b" },
+  { position: [3.6, 0, -18.4], height: 12.5, foot: 2.1, seed: 7717, tint: "#0d1018", accent: "#bfe0ff" },
+  { position: [-7.2, 0, -16.6], height: 11, foot: 2.0, seed: 9043, tint: "#141019", accent: "#ff9ec4" },
+];
+
 // Street lamps along the south side of the main avenue, skipping crossings.
 const LAMPS = [-22, -16, -6, 0, 6, 16, 22]
   .map((x, i) => ({ x, z: MAIN_AVENUE_Z + 1.7, cast: i % 2 === 0 }))
   .filter((l) => !isOnRoad(l.x, l.z, 0.4));
 
-// A small waterfront tree line, clear of the low-rise row and the streets.
+// A waterfront tree line / park strip along the south edge — denser so the
+// foreground in the home framing isn't dead space.
 const TREES: { x: number; z: number; s: number }[] = [
-  { x: -8, z: 6.3, s: 1.0 },
-  { x: -2, z: 6.3, s: 0.85 },
-  { x: 4, z: 6.3, s: 0.95 },
+  { x: -11, z: 6.4, s: 1.0 },
+  { x: -8, z: 6.2, s: 0.8 },
+  { x: -5, z: 6.4, s: 0.95 },
+  { x: -2, z: 6.2, s: 0.85 },
+  { x: 1, z: 6.4, s: 1.0 },
+  { x: 4, z: 6.2, s: 0.9 },
+  { x: 7, z: 6.4, s: 0.85 },
   { x: 21, z: 6.0, s: 0.9 },
+  { x: 24, z: 6.2, s: 0.8 },
   { x: -23, z: 6.0, s: 0.8 },
+  { x: -20, z: 6.2, s: 0.9 },
+];
+
+// A couple of park benches facing the lake in the waterfront strip.
+const BENCHES: { x: number; z: number; rot: number }[] = [
+  { x: -3.5, z: 5.4, rot: 0 },
+  { x: 2.5, z: 5.4, rot: 0 },
+  { x: 5.5, z: 5.4, rot: 0 },
 ];
 
 export default function City() {
@@ -95,15 +127,22 @@ export default function City() {
           scale={TOWER_MODEL_SCALE}
           position={TOWER_MODEL_OFFSET}
         />
-        {/* Light the tower — its GLB materials read near-black under the low
-            night ambient, so give it a cool key, a warm rim, and a base uplight. */}
-        <pointLight position={[7, 11, 9]} intensity={55} distance={40} color="#bcd0ff" />
-        <pointLight position={[-6, 14, -5]} intensity={32} distance={34} color="#ffd2a0" />
-        <pointLight position={[0, 2, 3]} intensity={26} distance={20} color="#ffb878" />
+        {/* Light the tower as a bright centerpiece with real cylindrical
+            contrast: a strong near-neutral key from the south-east, a softer
+            warm rim on the city-facing (north-west) edge so it sits in the warm
+            cityscape, a warm base uplight, and a gentle high fill on the SkyPod.
+            (The pod glow + red beacon come from the model's own accents.) */}
+        <pointLight position={[9, 12, 10]} intensity={28} distance={48} color="#dce2ee" />
+        <pointLight position={[-7, 15, -6]} intensity={20} distance={42} color="#ffce9c" />
+        <pointLight position={[0, 2, 3]} intensity={26} distance={26} color="#ffb878" />
+        <pointLight position={[0, 16, 5]} intensity={12} distance={28} color="#e6ecf6" />
       </group>
 
       {BUILDINGS.map((b, i) => (
         <Building key={i} {...b} />
+      ))}
+      {HEROES.map((hbld, i) => (
+        <HeroTower key={`hero-${i}`} {...hbld} />
       ))}
       {LAMPS.map((l, i) => (
         <Lamp key={i} position={[l.x, 0, l.z]} cast={l.cast} />
@@ -117,16 +156,75 @@ export default function City() {
       {TREES.map((t, i) => (
         <Tree key={i} position={[t.x, 0, t.z]} scale={t.s} />
       ))}
-      {/* GLB traffic lights standing at the main intersections. */}
+      {BENCHES.map((b, i) => (
+        <Bench key={i} position={[b.x, 0, b.z]} rotation={b.rot} />
+      ))}
+      {/* GLB traffic lights standing at the main intersections, each casting a
+          small green "go" light pool onto the asphalt. */}
       {TRAFFIC_LIGHTS.map((t, i) => (
-        <TrafficLight key={i} position={[t.x, 0, t.z]} rotation={t.rot} />
+        <group key={i}>
+          <TrafficLight position={[t.x, 0, t.z]} rotation={t.rot} />
+          <pointLight position={[t.x, 1.6, t.z]} intensity={1.6} distance={4.5} color="#39d353" />
+        </group>
       ))}
 
-      {/* TTC streetcar running along the main avenue. */}
+      {/* TTC streetcar running along the main avenue, on its tracks. */}
+      <StreetcarTrack from={-12} to={8} z={MAIN_AVENUE_Z} />
       <Streetcar position={[-2, 0, MAIN_AVENUE_Z]} />
-      {/* Billboards in the open CN Tower plaza (clear of roads + buildings). */}
-      <Billboard position={[3, 0, -7]} />
-      <Billboard position={[-4, 0, -2]} />
+      {/* A single billboard in the plaza, facing the main avenue (south). */}
+      <BillboardModel position={[3, 0, -1]} rotation={0} />
+    </group>
+  );
+}
+
+/**
+ * A unique skyline landmark tower: a tinted shaft of lit windows (via Building),
+ * a setback concrete crown, a glowing accent band, and an antenna with a red
+ * aviation light — so a few towers actually stand out from the repeated boxes.
+ */
+function HeroTower({
+  position,
+  height,
+  foot,
+  seed,
+  tint,
+  accent,
+}: {
+  position: [number, number, number];
+  height: number;
+  foot: number;
+  seed: number;
+  tint: string;
+  accent: string;
+}) {
+  return (
+    <group position={position}>
+      <Building
+        position={[0, 0, 0]}
+        size={[foot, height, foot]}
+        seed={seed}
+        color={tint}
+        litChance={0.5}
+      />
+      {/* Setback crown */}
+      <mesh position={[0, height + 0.55, 0]} castShadow>
+        <boxGeometry args={[foot * 0.62, 1.0, foot * 0.62]} />
+        <meshStandardMaterial color="#1a2030" flatShading roughness={1} />
+      </mesh>
+      {/* Glowing accent band on the crown */}
+      <mesh position={[0, height + 0.2, 0]}>
+        <boxGeometry args={[foot * 0.66, 0.18, foot * 0.66]} />
+        <meshStandardMaterial color="#0c0f1a" emissive={accent} emissiveIntensity={1.6} flatShading />
+      </mesh>
+      {/* Antenna + aviation light */}
+      <mesh position={[0, height + 1.6, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.06, 1.6, 6]} />
+        <meshStandardMaterial color="#3b4252" flatShading />
+      </mesh>
+      <mesh position={[0, height + 2.45, 0]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshStandardMaterial color="#ff3b3b" emissive="#ff2222" emissiveIntensity={2.4} />
+      </mesh>
     </group>
   );
 }
@@ -245,17 +343,78 @@ function Tree({
   );
 }
 
-function Billboard({ position }: { position: [number, number, number] }) {
+/** A simple low-poly park bench (slats + two legs). */
+function Bench({
+  position,
+  rotation = 0,
+}: {
+  position: [number, number, number];
+  rotation?: number;
+}) {
   return (
-    <group position={position}>
-      <mesh position={[0, 0.8, 0]}>
-        <boxGeometry args={[0.1, 1.6, 0.1]} />
-        <meshStandardMaterial color="#23303a" flatShading />
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Seat */}
+      <mesh position={[0, 0.28, 0]} castShadow>
+        <boxGeometry args={[1.1, 0.08, 0.34]} />
+        <meshStandardMaterial color="#5a3a22" flatShading roughness={1} />
       </mesh>
-      <mesh position={[0, 1.9, 0]}>
-        <boxGeometry args={[1.6, 0.9, 0.08]} />
-        <meshStandardMaterial color="#1a0606" emissive="#ff3b3b" emissiveIntensity={1.4} />
+      {/* Backrest */}
+      <mesh position={[0, 0.5, -0.14]} castShadow>
+        <boxGeometry args={[1.1, 0.32, 0.06]} />
+        <meshStandardMaterial color="#5a3a22" flatShading roughness={1} />
       </mesh>
+      {/* Legs */}
+      {[-0.45, 0.45].map((x) => (
+        <mesh key={x} position={[x, 0.14, 0]}>
+          <boxGeometry args={[0.08, 0.28, 0.32]} />
+          <meshStandardMaterial color="#2a313d" flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/**
+ * Streetcar/tram track on the main avenue: two metal rails with periodic
+ * sleepers, sitting just above the asphalt so the rail tops catch city light.
+ */
+function StreetcarTrack({
+  from,
+  to,
+  z,
+}: {
+  from: number;
+  to: number;
+  z: number;
+}) {
+  const gauge = 0.7;
+  const length = to - from;
+  const mid = (from + to) / 2;
+  const tieCount = Math.floor(length / 0.8);
+  return (
+    <group position={[mid, 0, z]}>
+      {[gauge / 2, -gauge / 2].map((dz) => (
+        <mesh key={dz} position={[0, 0.075, dz]}>
+          <boxGeometry args={[length, 0.05, 0.07]} />
+          <meshStandardMaterial
+            color="#6b7280"
+            emissive="#3a4150"
+            emissiveIntensity={0.3}
+            metalness={0.6}
+            roughness={0.4}
+            flatShading
+          />
+        </mesh>
+      ))}
+      {Array.from({ length: tieCount }).map((_, i) => {
+        const x = from + (i + 0.5) * (length / tieCount) - mid;
+        return (
+          <mesh key={i} position={[x, 0.06, 0]}>
+            <boxGeometry args={[0.14, 0.04, gauge + 0.24]} />
+            <meshStandardMaterial color="#241c14" flatShading roughness={1} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }

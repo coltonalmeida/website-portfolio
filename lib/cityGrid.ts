@@ -40,8 +40,37 @@ export const ROADS: RoadSeg[] = [
   { axis: "z", along: 10, from: -24, to: 7, width: 2.6 }, // east cross street
 ];
 
-/** Cross streets that meet the main (waterfront) avenue — get crosswalks. */
-export const MAIN_CROSSINGS = [-12, 10];
+/**
+ * Zebra crosswalks at each avenue × cross-street intersection. For every
+ * intersection we lay an "L" of two crossings set back onto the road
+ * approaches (one across the avenue on its west leg, one across the street on
+ * its north leg) so they read as real crossings instead of paint in the middle.
+ */
+export interface CrosswalkSpec {
+  x: number;
+  z: number;
+  axis: "x" | "z"; // the crossed road's travel direction
+  width: number;
+}
+export const CROSSWALKS: CrosswalkSpec[] = (() => {
+  const out: CrosswalkSpec[] = [];
+  const avenues = ROADS.filter((r) => r.axis === "x");
+  const streets = ROADS.filter((r) => r.axis === "z");
+  for (const av of avenues) {
+    for (const st of streets) {
+      const ix = st.along; // intersection x
+      const iz = av.along; // intersection z
+      const meets =
+        ix > av.from && ix < av.to && iz > st.from && iz < st.to;
+      if (!meets) continue;
+      // Across the avenue, set back on the west leg.
+      out.push({ x: ix - (st.width / 2 + 0.7), z: iz, axis: "x", width: av.width });
+      // Across the street, set back on the north leg.
+      out.push({ x: ix, z: iz - (av.width / 2 + 0.7), axis: "z", width: st.width });
+    }
+  }
+  return out;
+})();
 
 /** Where perpendicular roads cross `seg` (so curbs/dashes can break there). */
 export function roadCrossings(seg: RoadSeg): { at: number; half: number }[] {
@@ -79,9 +108,12 @@ export const DISTRICTS: District[] = [
   { cx: -1, cz: -17.5, cols: 5, rows: 2, dx: 3.4, dz: 3.0, hMin: 5, hMax: 11 },
   { cx: 17, cz: -17.5, cols: 3, rows: 2, dx: 3.3, dz: 3.0, hMin: 4, hMax: 8 },
   { cx: -18, cz: -17.5, cols: 3, rows: 2, dx: 3.3, dz: 3.0, hMin: 4, hMax: 7 },
-  // Midtown fillers in the gaps between the spread-out landmarks.
-  { cx: -8, cz: -3, cols: 2, rows: 2, dx: 2.5, dz: 3.0, hMin: 3, hMax: 6 },
-  { cx: 8, cz: -9, cols: 2, rows: 2, dx: 2.5, dz: 3.0, hMin: 3, hMax: 6 },
+  // Midtown fillers in the gaps between the spread-out landmarks — denser so
+  // the middle of the map doesn't read as empty around the tower plaza.
+  { cx: -8, cz: -2, cols: 3, rows: 2, dx: 2.5, dz: 2.8, hMin: 3, hMax: 7 },
+  { cx: 8, cz: -9, cols: 3, rows: 2, dx: 2.5, dz: 2.8, hMin: 3, hMax: 7 },
+  { cx: -7, cz: -10, cols: 2, rows: 2, dx: 2.6, dz: 2.8, hMin: 3, hMax: 6 },
+  { cx: 7, cz: -2, cols: 2, rows: 2, dx: 2.6, dz: 2.8, hMin: 3, hMax: 6 },
   // Waterfront low-rise (south of the main avenue).
   { cx: -18, cz: 5.2, cols: 3, rows: 1, dx: 3.0, dz: 3.0, hMin: 2, hMax: 3 },
   { cx: 16, cz: 5.2, cols: 3, rows: 1, dx: 3.0, dz: 3.0, hMin: 2, hMax: 3 },

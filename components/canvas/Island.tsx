@@ -4,8 +4,7 @@ import type { Group } from "three";
 import {
   LAND,
   ROADS,
-  MAIN_AVENUE_Z,
-  MAIN_CROSSINGS,
+  CROSSWALKS,
   roadCrossings,
   type RoadSeg,
 } from "@/lib/cityGrid";
@@ -78,9 +77,9 @@ function CityGround() {
         <Road key={i} seg={r} crossings={roadCrossings(r)} />
       ))}
 
-      {/* Crosswalks where the main avenue meets each cross street. */}
-      {MAIN_CROSSINGS.map((x) => (
-        <Crosswalk key={x} position={[x, 0.09, MAIN_AVENUE_Z]} />
+      {/* Zebra crosswalks at every avenue × cross-street intersection. */}
+      {CROSSWALKS.map((c, i) => (
+        <Crosswalk key={i} position={[c.x, 0.095, c.z]} axis={c.axis} width={c.width} />
       ))}
     </group>
   );
@@ -177,13 +176,39 @@ function Road({
   );
 }
 
-/** Zebra crosswalk stripes. */
-function Crosswalk({ position }: { position: [number, number, number] }) {
+/**
+ * Zebra crosswalk: white bars laid across the carriageway. `axis` is the road's
+ * travel direction — bars run *along* travel (so you step over them crossing)
+ * and are arrayed across the road `width`.
+ */
+function Crosswalk({
+  position,
+  axis,
+  width,
+}: {
+  position: [number, number, number];
+  axis: "x" | "z";
+  width: number;
+}) {
+  const span = width - 0.3; // stay just inside the curbs
+  const bars = 6;
+  const barLen = 0.5; // bar length along the travel axis
+  const barW = 0.26; // bar thickness across the road
+  const offsets = Array.from(
+    { length: bars },
+    (_, i) => -span / 2 + (span / (bars - 1)) * i,
+  );
   return (
     <group position={position}>
-      {[-0.8, -0.4, 0, 0.4, 0.8].map((x) => (
-        <mesh key={x} position={[x, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[0.22, 2.4]} />
+      {offsets.map((o) => (
+        <mesh
+          key={o}
+          position={axis === "x" ? [0, 0, o] : [o, 0, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry
+            args={axis === "x" ? [barLen, barW] : [barW, barLen]}
+          />
           <meshStandardMaterial
             color="#cfd6e0"
             emissive="#aab2c0"

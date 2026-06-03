@@ -20,8 +20,8 @@ import { ZONES } from "@/lib/zones";
  * north into the lit skyline with the CN Tower anchoring the scene.
  */
 export const HOME: { position: Vector3Tuple; lookAt: Vector3Tuple } = {
-  position: [19, 14, 30],
-  lookAt: [0, 4, -8],
+  position: [18, 11, 30],
+  lookAt: [0, 3.4, -8],
 };
 
 /** High, pulled-back opening pose the camera glides in from on first load. */

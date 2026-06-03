@@ -39,6 +39,26 @@ export default function Building({
   );
   useEffect(() => () => windows.dispose(), [windows]);
 
+  // Small deterministic spread so towers don't all glow at the same intensity.
+  const emissive = 1.0 + ((seed * 2654435761) % 1000) / 1000 * 0.3;
+
+  // A couple of rooftop HVAC/vent boxes (deterministic placement) so roofs read
+  // as cluttered from the top-down and angled views instead of bare planes.
+  const hvac = useMemo(() => {
+    const hash = (n: number) => {
+      const s = Math.sin((seed + n) * 91.7) * 43758.5453;
+      return s - Math.floor(s);
+    };
+    const n = 2 + Math.floor(hash(1) * 2);
+    return Array.from({ length: n }, (_, i) => ({
+      x: (hash(i * 3 + 2) - 0.5) * w * 0.6,
+      z: (hash(i * 3 + 3) - 0.5) * d * 0.6,
+      bw: 0.22 + hash(i * 3 + 4) * 0.3,
+      bh: 0.14 + hash(i * 3 + 5) * 0.22,
+      bd: 0.22 + hash(i * 3 + 6) * 0.3,
+    }));
+  }, [seed, w, d]);
+
   return (
     <group position={position}>
       {/* Tower body — windows glow from the emissive map. */}
@@ -48,7 +68,7 @@ export default function Building({
           color={color}
           emissive="#ffffff"
           emissiveMap={windows}
-          emissiveIntensity={1.5}
+          emissiveIntensity={emissive}
           roughness={0.85}
           metalness={0.1}
           flatShading
@@ -60,6 +80,14 @@ export default function Building({
         <boxGeometry args={[w * 1.04, 0.16, d * 1.04]} />
         <meshStandardMaterial color="#0a0e18" flatShading roughness={1} />
       </mesh>
+
+      {/* Rooftop HVAC units. */}
+      {hvac.map((u, i) => (
+        <mesh key={i} position={[u.x, h + 0.13 + u.bh / 2, u.z]} castShadow>
+          <boxGeometry args={[u.bw, u.bh, u.bd]} />
+          <meshStandardMaterial color="#161b27" flatShading roughness={1} />
+        </mesh>
+      ))}
 
       {rooftop === "water-tower" && (
         <group position={[w * 0.18, h + 0.1, d * 0.1]}>

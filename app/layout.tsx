@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +13,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const snPro = localFont({
+  src: [
+    {
+      path: "./fonts/SNPro-Variable.ttf",
+      style: "normal",
+      weight: "200 900",
+    },
+    {
+      path: "./fonts/SNPro-Italic-Variable.ttf",
+      style: "italic",
+      weight: "200 900",
+    },
+  ],
+  variable: "--font-sn-pro",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Colton Almeida — Interactive 3D Portfolio",
+  title: "Colton Almeida | Portfolio",
   description:
-    "Explore an interactive low-poly 3D island. Four landmark zones map to Skills, Projects, Experience, and Contact.",
+    "Colton Almeida is a Computer Engineering student at the University of Toronto, building projects across software, hardware, and AI.",
 };
 
 export default function RootLayout({
@@ -26,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${snPro.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

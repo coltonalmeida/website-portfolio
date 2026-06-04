@@ -72,9 +72,21 @@ export default function Overlay() {
     : "translate-y-6 opacity-0 sm:translate-y-0 sm:translate-x-8";
 
   return (
-    <div className={wrapClass}>
-      <section
-        role="dialog"
+    <>
+      {/* Blurs the live 3D scene behind the panel while a section is open. It's
+          pointer-events-none so a click still falls through to the canvas's
+          onPointerMissed and closes the section. Fades with the panel via
+          `open`; the Nav (z-30) and panel (z-20) stay above it, so only the
+          city blurs. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-0 z-10 bg-[#070b18]/30 backdrop-blur-md transition-opacity duration-300 ease-out ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <div className={wrapClass}>
+        <section
+          role="dialog"
         aria-modal="false"
         aria-labelledby="overlay-title"
         className={`pointer-events-auto w-full rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:p-8 ${
@@ -136,8 +148,9 @@ export default function Overlay() {
             ))}
           </ul>
         )}
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }
 

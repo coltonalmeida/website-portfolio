@@ -2,6 +2,7 @@ import Experience from "@/components/canvas/Experience";
 import Nav from "@/components/ui/Nav";
 import Overlay from "@/components/ui/Overlay";
 import Loader from "@/components/ui/Loader";
+import FogIntro from "@/components/ui/FogIntro";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <Experience />
       <Nav />
       <Overlay />
+      <FogIntro />
       <Loader />
 
       {/*

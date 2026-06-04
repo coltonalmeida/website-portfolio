@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useProgress } from "@react-three/drei";
+import { usePortfolio } from "@/lib/store";
 
 /**
  * Full-screen preloader, modelled 1:1 on the reference animation:
@@ -25,6 +26,7 @@ const MIN_DURATION = 2600;
 
 export default function Loader() {
   const { active, progress } = useProgress();
+  const setLoaded = usePortfolio((s) => s.setLoaded);
 
   // Latest loader state, read inside the animation loop without restarting it.
   const stateRef = useRef({ active, progress });
@@ -55,6 +57,7 @@ export default function Loader() {
       if (!isActive && elapsed >= MIN_DURATION && shown >= 99.4) {
         setDisplay(100);
         setDone(true);
+        setLoaded(true); // hand off to the fog intro, which clears + zooms in
         return; // stop the loop; the overlay fades out from here
       }
       raf = requestAnimationFrame(tick);
@@ -70,6 +73,9 @@ export default function Loader() {
   return (
     <div
       aria-hidden={done}
+      // The loading screen keeps the original Geist face on purpose — the rest of
+      // the site uses SN Pro, but the preloader is pinned so it stays unchanged.
+      style={{ fontFamily: "var(--font-geist-sans), Arial, Helvetica, sans-serif" }}
       className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#0a0a0c] transition-opacity duration-700 ease-out ${
         done ? "opacity-0" : "opacity-100"
       }`}

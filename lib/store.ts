@@ -10,13 +10,18 @@ import type { SectionId } from "@/types";
 interface PortfolioState {
   activeSection: SectionId | null;
   hoveredSection: SectionId | null;
+  /** Flips true when the preloader finishes — cues the fog intro to clear. */
+  loaded: boolean;
   setActiveSection: (id: SectionId | null) => void;
   setHoveredSection: (id: SectionId | null) => void;
+  setLoaded: (v: boolean) => void;
 }
 
 export const usePortfolio = create<PortfolioState>((set) => ({
   activeSection: null,
   hoveredSection: null,
+  loaded: false,
   setActiveSection: (id) => set({ activeSection: id }),
   setHoveredSection: (id) => set({ hoveredSection: id }),
+  setLoaded: (v) => set({ loaded: v }),
 }));

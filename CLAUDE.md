@@ -123,10 +123,10 @@ don't reinvent what a skill already does.
 
 ## Available subagents (plugin agents)
 
-These specialized agents are installed. They are **opt-in only** — use one when
-the user explicitly asks, or for a focused independent pass (e.g. a review after
-a build). Don't spawn them for the normal sequential build; one agent handles
-that more cheaply. Each starts cold, so give it full context.
+These specialized agents are installed. **Use one whenever you judge it useful**
+— e.g. a focused independent pass such as a review after a build. They start cold
+and cost tokens, so prefer inline work for simple tasks, but spawn an agent when
+it genuinely helps. Each starts cold, so give it full context.
 
 - `feature-dev:code-architect` (sonnet) — design a feature's architecture from
   existing patterns; produces an implementation blueprint.
@@ -145,8 +145,10 @@ that more cheaply. Each starts cold, so give it full context.
 
 - **Don't self-trigger billed/cloud reviews.** `/code-review ultra`
   (a.k.a. ultrareview) is user-initiated and billed — never launch it yourself.
-- **Don't spawn subagents or run a `Workflow`** unless explicitly asked; they're
-  expensive and start without this conversation's context. Handle tasks inline.
+- **Use subagents at your discretion** (they start cold — give full context —
+  and cost tokens, so prefer inline for simple tasks). **Don't run a `Workflow`**
+  unless explicitly asked; that path is expensive and the tool itself requires
+  opt-in.
 - **Don't auto-deploy.** Run `vercel deploy` / promote to production only when
   asked.
 - **`leva`, postprocessing, audio, particles** are polish — add them only after

@@ -45,3 +45,7 @@ dev.log
 
 # markdown docs
 *.md
+
+# local dev verification (screenshot cycle)
+/screenshots/
+/scripts/

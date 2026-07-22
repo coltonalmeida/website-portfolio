@@ -2,8 +2,8 @@ import type { SectionId } from "@/types";
 
 /**
  * Section content for the DOM overlays. Keep the shape stable
- * (`title` / `tagline` / `body` / `items`) and the overlay + nav pick it up
- * automatically.
+ * (`title` / `tagline` / optional `body` / `items`) and the overlay + nav pick
+ * it up automatically.
  */
 export interface SectionItem {
   label: string;
@@ -22,7 +22,8 @@ export interface SectionItem {
 export interface SectionContent {
   title: string;
   tagline: string;
-  body: string;
+  /** Intro line. Omit it where the items below already say the same thing. */
+  body?: string;
   items: SectionItem[];
 }
 
@@ -47,7 +48,7 @@ export const CONTENT: Record<SectionId, SectionContent> = {
   projects: {
     title: "Projects",
     tagline: "Under construction",
-    body: "Things I've built end to end — a video automation pipeline, a full-stack web app, and a deep RL agent. Source is on GitHub.",
+    body: "Source code on GitHub.",
     items: [
       {
         label: "Twitch to TikTok Clipper",
@@ -73,7 +74,7 @@ export const CONTENT: Record<SectionId, SectionContent> = {
   experience: {
     title: "Experience",
     tagline: "Union Station",
-    body: "The path so far — where I've worked and where I'm studying.",
+    // No body — the Work / Education headings below already say it.
     items: [
       {
         group: "Work",

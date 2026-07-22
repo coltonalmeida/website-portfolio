@@ -121,7 +121,9 @@ export default function Overlay() {
           </button>
         </div>
 
-        <p className="text-sm leading-relaxed text-zinc-300">{content.body}</p>
+        {content.body && (
+          <p className="text-sm leading-relaxed text-zinc-300">{content.body}</p>
+        )}
 
         {shown === "skills" ? (
           <>

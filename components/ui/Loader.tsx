@@ -29,8 +29,13 @@ export default function Loader() {
   const setLoaded = usePortfolio((s) => s.setLoaded);
 
   // Latest loader state, read inside the animation loop without restarting it.
+  // Written after commit rather than during render: React can start a render and
+  // throw it away (Strict Mode, concurrent interruptions), and a discarded render
+  // would still have mutated the ref. `useRef`'s initializer covers first paint.
   const stateRef = useRef({ active, progress });
-  stateRef.current = { active, progress };
+  useEffect(() => {
+    stateRef.current = { active, progress };
+  });
 
   const [display, setDisplay] = useState(0);
   const [done, setDone] = useState(false);
@@ -65,7 +70,9 @@ export default function Loader() {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+    // `setLoaded` is a zustand action with a stable identity, so listing it
+    // satisfies the dep rule without ever restarting the count-up loop.
+  }, [setLoaded]);
 
   const pct = Math.min(100, Math.round(display));
   const counter = String(pct).padStart(3, "0");

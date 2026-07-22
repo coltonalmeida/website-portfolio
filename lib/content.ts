@@ -31,7 +31,7 @@ export const CONTENT: Record<SectionId, SectionContent> = {
   skills: {
     title: "Skills",
     tagline: "What's in my toolkit.",
-    body: "My toolkit",
+    body: "My toolkit.",
     // Certifications. The toolkit itself lives in lib/skills.ts and is rendered
     // by <SkillsMarquee />; these render underneath it as a grid.
     items: [

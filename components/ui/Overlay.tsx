@@ -136,13 +136,41 @@ export default function Overlay() {
                   style={{ backgroundColor: accent }}
                   aria-hidden
                 />
-                <span className="mt-2 block text-sm font-medium text-zinc-100">
-                  {item.label}
-                </span>
+                {item.href ? (
+                  <a
+                    href={item.href}
+                    {...externalLinkProps(item.href)}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-zinc-100 transition-colors hover:text-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                    style={{ "--accent": accent } as React.CSSProperties}
+                  >
+                    {item.label}
+                    <ArrowIcon />
+                  </a>
+                ) : (
+                  <span className="mt-2 block text-sm font-medium text-zinc-100">
+                    {item.label}
+                  </span>
+                )}
                 {item.detail && (
                   <span className="mt-0.5 block text-xs text-zinc-400">
                     {item.detail}
                   </span>
+                )}
+                {item.liveHref && (
+                  <a
+                    href={item.liveHref}
+                    {...externalLinkProps(item.liveHref)}
+                    className="mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.15em] text-zinc-300 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                    style={
+                      {
+                        "--accent": accent,
+                        borderColor: accent,
+                      } as React.CSSProperties
+                    }
+                  >
+                    Live site
+                    <ArrowIcon />
+                  </a>
                 )}
               </li>
             ))}
@@ -182,6 +210,38 @@ function Timeline({
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * Open http(s) destinations in a new tab; leave `mailto:` (and anything else)
+ * to the browser's default handling.
+ */
+function externalLinkProps(href: string) {
+  return href.startsWith("http")
+    ? ({ target: "_blank", rel: "noreferrer" } as const)
+    : {};
+}
+
+/** Small outbound arrow shown beside links. */
+function ArrowIcon() {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      aria-hidden
+      className="shrink-0"
+    >
+      <path
+        d="M2.5 7.5L7.5 2.5M7.5 2.5H3.5M7.5 2.5V6.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

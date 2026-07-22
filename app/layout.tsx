@@ -33,7 +33,7 @@ const snPro = localFont({
 export const metadata: Metadata = {
   title: "Colton Almeida | Portfolio",
   description:
-    "Colton Almeida is a Computer Engineering student at the University of Toronto, building projects across software, hardware, and AI.",
+    "Colton Almeida is an incoming Electrical & Computer Engineering student at the University of Toronto, building projects across full-stack web, video automation, and deep reinforcement learning.",
 };
 
 export default function RootLayout({

@@ -61,15 +61,12 @@ export default function Overlay() {
   const content = CONTENT[shown];
   const accent = ZONE_BY_ID[shown].color;
 
-  // Skills uses a wide bottom-centred strip (the "Core Skills" marquee); the
-  // other sections keep the compact side panel.
+  // Every section opens dead-centre; Skills just gets a wider panel to fit the
+  // "Core Skills" marquee.
   const isSkills = shown === "skills";
-  const wrapClass = isSkills
-    ? "pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:p-8"
-    : "pointer-events-none fixed inset-0 z-20 flex items-end justify-center p-4 sm:items-center sm:justify-end sm:p-8";
-  const closedClass = isSkills
-    ? "translate-y-6 opacity-0"
-    : "translate-y-6 opacity-0 sm:translate-y-0 sm:translate-x-8";
+  const wrapClass =
+    "pointer-events-none fixed inset-0 z-20 flex items-center justify-center p-4 sm:p-8";
+  const closedClass = "translate-y-6 opacity-0";
 
   return (
     <>
@@ -87,12 +84,18 @@ export default function Overlay() {
       <div className={wrapClass}>
         <section
           role="dialog"
-        aria-modal="false"
-        aria-labelledby="overlay-title"
-        className={`pointer-events-auto w-full rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:p-8 ${
-          isSkills ? "max-w-5xl" : "max-w-md"
-        } ${open ? "translate-y-0 opacity-100" : closedClass}`}
-      >
+          aria-modal="false"
+          aria-labelledby="overlay-title"
+          // max-h + scroll: the panel is vertically centred, so a tall section
+          // (Skills = marquee + certifications) would otherwise run off both
+          // ends of a short viewport with no way to reach the bottom. The caps
+          // are what a centred panel can be without growing up behind the fixed
+          // Nav: the header measures 152px at 390px wide (it wraps to two rows)
+          // and 82px from sm up, leaving 60vh / 78vh once both ends are cleared.
+          className={`pointer-events-auto max-h-[60vh] w-full overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:max-h-[78vh] sm:p-8 ${
+            isSkills ? "max-w-5xl" : "max-w-md"
+          } ${open ? "translate-y-0 opacity-100" : closedClass}`}
+        >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <p
@@ -121,7 +124,10 @@ export default function Overlay() {
         <p className="text-sm leading-relaxed text-zinc-300">{content.body}</p>
 
         {shown === "skills" ? (
-          <SkillsMarquee accent={accent} />
+          <>
+            <SkillsMarquee accent={accent} />
+            <Certifications items={content.items} accent={accent} />
+          </>
         ) : shown === "experience" ? (
           <Timeline items={content.items} accent={accent} />
         ) : (
@@ -182,7 +188,12 @@ export default function Overlay() {
   );
 }
 
-/** Vertical timeline of roles (the Experience "map"). */
+/**
+ * Vertical timeline of roles (the Experience "map"), split into labelled
+ * groups — Work, Education. Consecutive items sharing a `group` render under
+ * one heading; items with no `group` fall into a single unlabelled run, so the
+ * component still works for ungrouped data.
+ */
 function Timeline({
   items,
   accent,
@@ -190,26 +201,90 @@ function Timeline({
   items: SectionItem[];
   accent: string;
 }) {
+  const groups: { name?: string; items: SectionItem[] }[] = [];
+  for (const item of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.name === item.group) last.items.push(item);
+    else groups.push({ name: item.group, items: [item] });
+  }
+
   return (
-    <ol className="mt-5 space-y-5 border-l border-white/15 pl-5">
-      {items.map((item) => (
-        <li key={item.label} className="relative">
-          <span
-            className="absolute -left-[26px] top-1 h-3 w-3 rounded-full ring-4 ring-zinc-900"
-            style={{ backgroundColor: accent }}
-            aria-hidden
-          />
-          <span className="block text-sm font-medium text-zinc-100">
-            {item.label}
-          </span>
-          {item.detail && (
-            <span className="mt-0.5 block text-xs text-zinc-400">
-              {item.detail}
-            </span>
+    <div className="mt-5 space-y-5">
+      {groups.map((group, i) => (
+        <div key={group.name ?? `group-${i}`}>
+          {group.name && (
+            <p
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.2em]"
+              style={{ color: accent }}
+            >
+              {group.name}
+            </p>
           )}
-        </li>
+          <ol className="space-y-5 border-l border-white/15 pl-5">
+            {group.items.map((item) => (
+              <li key={item.label} className="relative">
+                <span
+                  className="absolute -left-[26px] top-1 h-3 w-3 rounded-full ring-4 ring-zinc-900"
+                  style={{ backgroundColor: accent }}
+                  aria-hidden
+                />
+                <span className="block text-sm font-medium text-zinc-100">
+                  {item.label}
+                </span>
+                {item.detail && (
+                  <span className="mt-0.5 block text-xs text-zinc-400">
+                    {item.detail}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
       ))}
-    </ol>
+    </div>
+  );
+}
+
+/**
+ * Certifications grid shown under the Skills marquee. Widens to three columns
+ * on lg so the five entries fill the `max-w-5xl` Skills panel (3 + 2) instead
+ * of sitting in stretched half-width cards with an orphan trailing row.
+ */
+function Certifications({
+  items,
+  accent,
+}: {
+  items: SectionItem[];
+  accent: string;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6">
+      <p
+        className="text-xs font-semibold uppercase tracking-[0.3em]"
+        style={{ color: accent }}
+      >
+        Certifications
+      </p>
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <li
+            key={item.label}
+            className="rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3"
+          >
+            <span className="block text-sm font-medium text-zinc-100">
+              {item.label}
+            </span>
+            {item.detail && (
+              <span className="mt-0.5 block text-xs text-zinc-400">
+                {item.detail}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

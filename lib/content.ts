@@ -12,6 +12,11 @@ export interface SectionItem {
   href?: string;
   /** Optional second link (live site), rendered as a small pill. */
   liveHref?: string;
+  /**
+   * Optional heading this item sits under. `Timeline` groups consecutive items
+   * that share one, so ordering here drives the rendered grouping.
+   */
+  group?: string;
 }
 
 export interface SectionContent {
@@ -26,13 +31,17 @@ export const CONTENT: Record<SectionId, SectionContent> = {
     title: "Skills",
     tagline: "What's in my toolkit",
     body: "The languages, frameworks, and libraries I actually build with — from Python data and ML work to full-stack TypeScript.",
-    // Not rendered: the Skills overlay swaps in <SkillsMarquee /> instead, which
-    // reads lib/skills.ts. Kept in sync with those categories.
+    // Certifications. The toolkit itself lives in lib/skills.ts and is rendered
+    // by <SkillsMarquee />; these render underneath it as a grid.
     items: [
-      { label: "Languages", detail: "Python, TypeScript, JavaScript, SQL, HTML, CSS" },
-      { label: "Frameworks", detail: "React, Node.js, Express, FastAPI, FastMCP, Tailwind CSS" },
-      { label: "Developer Tools", detail: "Git, VS Code, Docker, GitHub Actions, PostgreSQL" },
-      { label: "Libraries", detail: "PyTorch, Stable-Baselines3, OpenCV, Whisper, Pydantic, VoyageAI" },
+      {
+        label: "CS50P: Introduction to Programming with Python",
+        detail: "Harvard University",
+      },
+      { label: "Building with the Claude API", detail: "Anthropic" },
+      { label: "AI Fluency Framework & Foundations", detail: "Anthropic" },
+      { label: "French as a Second Language", detail: "DPCDSB" },
+      { label: "IB Diploma", detail: "St Francis Xavier CSS" },
     ],
   },
   projects: {
@@ -64,20 +73,17 @@ export const CONTENT: Record<SectionId, SectionContent> = {
   experience: {
     title: "Experience",
     tagline: "Union Station",
-    body: "The path so far — where I'm headed, where I've worked, and what I've picked up along the way.",
+    body: "The path so far — where I've worked and where I'm studying.",
     items: [
       {
-        label: "University of Toronto, St. George",
-        detail: "B.A.Sc. Electrical & Computer Engineering · Sep 2026 – 2031",
-      },
-      {
+        group: "Work",
         label: "Skate Patroller",
         detail: "City of Mississauga · Jan 2023 – Present",
       },
       {
-        label: "Certifications",
-        detail:
-          "CS50P (Harvard) · Building with the Claude API (Anthropic) · AI Fluency (Anthropic) · IB Diploma",
+        group: "Education",
+        label: "University of Toronto, St. George",
+        detail: "B.A.Sc. Electrical & Computer Engineering · Sep 2026 – 2031",
       },
     ],
   },

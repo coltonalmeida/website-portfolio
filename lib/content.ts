@@ -30,8 +30,8 @@ export interface SectionContent {
 export const CONTENT: Record<SectionId, SectionContent> = {
   skills: {
     title: "Skills",
-    tagline: "What's in my toolkit",
-    body: "The languages, frameworks, and libraries I actually build with — from Python data and ML work to full-stack TypeScript.",
+    tagline: "What's in my toolkit.",
+    body: "My toolkit",
     // Certifications. The toolkit itself lives in lib/skills.ts and is rendered
     // by <SkillsMarquee />; these render underneath it as a grid.
     items: [

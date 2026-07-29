@@ -7,6 +7,8 @@ import type { SectionId } from "@/types";
  */
 export interface SectionItem {
   label: string;
+  /** Tech stack. Present only on projects; renders as its own mini box above `detail`. */
+  stack?: string;
   detail?: string;
   /** Repo / profile / mailto — turns the item label into a link. */
   href?: string;
@@ -52,21 +54,24 @@ export const CONTENT: Record<SectionId, SectionContent> = {
     items: [
       {
         label: "Twitch to TikTok Clipper",
+        stack: "Python · FFmpeg · OpenCV · Whisper · Claude API",
         detail:
-          "Python · FFmpeg · OpenCV · Whisper · Claude API — automated 9:16 clip pipeline; 50K+ views in the first month",
+          "Automated 9:16 clip pipeline · 50K+ views in the first month",
         href: "https://github.com/coltonalmeida/twitch-clipper",
       },
       {
         label: "FluentKeys",
+        stack: "React 19 · TypeScript · Express · PostgreSQL · Clerk",
         detail:
-          "React 19 · TypeScript · Express · PostgreSQL · Clerk — typing trainer with a real-time engine and global leaderboard",
+          "Typing trainer with a real-time engine and global leaderboard · 200 users",
         href: "https://github.com/coltonalmeida/fluentkeys",
         liveHref: "https://fluentkeys.com",
       },
       {
         label: "space-invaders-rl",
+        stack: "PyTorch · Stable-Baselines3 · Gymnasium",
         detail:
-          "PyTorch · Stable-Baselines3 · Gymnasium — PPO agent from raw pixels; mean reward 983 (2.1× baseline) after 10M steps",
+          "PPO agent from raw pixels · mean reward 983 (2.1× baseline) after 10M steps",
         href: "https://github.com/coltonalmeida/space-invaders-rl",
       },
     ],

@@ -159,10 +159,26 @@ export default function Overlay() {
                     {item.label}
                   </span>
                 )}
-                {item.detail && (
-                  <span className="mt-0.5 block text-xs text-zinc-400">
-                    {item.detail}
-                  </span>
+                {/* Projects carry a `stack`, so their supporting text splits
+                    into two stacked mini boxes — tech on top, result below.
+                    Everything else (Contact) keeps the plain detail line. */}
+                {item.stack ? (
+                  <div className="mt-2 space-y-1.5">
+                    <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
+                      {item.stack}
+                    </span>
+                    {item.detail && (
+                      <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
+                        {item.detail}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  item.detail && (
+                    <span className="mt-0.5 block text-xs text-zinc-400">
+                      {item.detail}
+                    </span>
+                  )
                 )}
                 {item.liveHref && (
                   <a

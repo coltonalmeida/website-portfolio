@@ -7,6 +7,8 @@ import type { SectionId } from "@/types";
  */
 export interface SectionItem {
   label: string;
+  /** Award/honour banner. Projects only; renders as an accent pill above the title. */
+  award?: string;
   /** Tech stack. Present only on projects; renders as its own mini box above `detail`. */
   stack?: string;
   detail?: string;
@@ -52,6 +54,15 @@ export const CONTENT: Record<SectionId, SectionContent> = {
     tagline: "Under construction",
     body: "Source code on GitHub.",
     items: [
+      {
+        label: "Loadshift",
+        award: "Ignition Hacks v7 · 1st Overall",
+        stack: "Python · FastAPI · LightGBM · Next.js · TypeScript · Render",
+        detail:
+          "Forecasts Ontario's marginal carbon intensity 24h ahead and names the cleanest hour to run a load · 1st Overall, Best Solo Hack, 2nd Best Use of Render",
+        href: "https://github.com/coltonalmeida/Loadshift",
+        liveHref: "https://loadshift-web.onrender.com/",
+      },
       {
         label: "Twitch to TikTok Clipper",
         stack: "Python · FFmpeg · OpenCV · Whisper · Claude API",

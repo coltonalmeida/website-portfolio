@@ -32,3 +32,45 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Overlay panels are the only scrollable surfaces here — page scroll is off,
+   above. The platform default (an opaque track with stepper arrows on Windows)
+   reads as a foreign widget inside the dark glass panel, so paint a slim bar
+   that belongs to it instead.
+
+   Deliberately no `scrollbar-gutter: stable`: it reserves the gutter on a
+   scroll container whether or not a bar is showing, which would shift every
+   panel's content off-centre in the common case where nothing overflows. */
+.overlay-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.overlay-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overlay-scroll::-webkit-scrollbar-thumb {
+  background-color: rgb(255 255 255 / 0.18);
+  border-radius: 9999px;
+  /* A transparent border + content-box clip is the only way to inset a WebKit
+     thumb, so it floats clear of the cards rather than butting against them. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.overlay-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(255 255 255 / 0.32);
+}
+/* Chromium on Windows draws stepper buttons unless they're explicitly removed. */
+.overlay-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox has no ::-webkit-scrollbar, so it needs the standard properties —
+   but these must stay behind @supports: when `scrollbar-width`/`scrollbar-color`
+   are set, Chromium IGNORES the pseudo-element rules above and we'd lose the
+   rounded, inset thumb everywhere. */
+@supports not selector(::-webkit-scrollbar) {
+  .overlay-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SectionId } from "@/types";
 import { usePortfolio } from "@/lib/store";
 import { CONTENT, type SectionItem } from "@/lib/content";
@@ -92,7 +92,7 @@ export default function Overlay() {
           // are what a centred panel can be without growing up behind the fixed
           // Nav: the header measures 152px at 390px wide (it wraps to two rows)
           // and 82px from sm up, leaving 60vh / 78vh once both ends are cleared.
-          className={`pointer-events-auto max-h-[60vh] w-full overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:max-h-[78vh] sm:p-8 ${
+          className={`overlay-scroll pointer-events-auto max-h-[60vh] w-full overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900/80 p-6 text-zinc-100 shadow-2xl backdrop-blur-md transition duration-300 ease-out sm:max-h-[78vh] sm:p-8 ${
             isSkills ? "max-w-5xl" : "max-w-md"
           } ${open ? "translate-y-0 opacity-100" : closedClass}`}
         >
@@ -132,6 +132,8 @@ export default function Overlay() {
           </>
         ) : shown === "experience" ? (
           <Timeline items={content.items} accent={accent} />
+        ) : shown === "projects" ? (
+          <ProjectList items={content.items} accent={accent} />
         ) : (
           <ul className="mt-5 space-y-2">
             {content.items.map((item) => (
@@ -159,42 +161,13 @@ export default function Overlay() {
                     {item.label}
                   </span>
                 )}
-                {/* Projects carry a `stack`, so their supporting text splits
-                    into two stacked mini boxes — tech on top, result below.
-                    Everything else (Contact) keeps the plain detail line. */}
-                {item.stack ? (
-                  <div className="mt-2 space-y-1.5">
-                    <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
-                      {item.stack}
-                    </span>
-                    {item.detail && (
-                      <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
-                        {item.detail}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  item.detail && (
-                    <span className="mt-0.5 block text-xs text-zinc-400">
-                      {item.detail}
-                    </span>
-                  )
-                )}
-                {item.liveHref && (
-                  <a
-                    href={item.liveHref}
-                    {...externalLinkProps(item.liveHref)}
-                    className="mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.15em] text-zinc-300 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-                    style={
-                      {
-                        "--accent": accent,
-                        borderColor: accent,
-                      } as React.CSSProperties
-                    }
-                  >
-                    Live site
-                    <ArrowIcon />
-                  </a>
+                {/* Contact is the only section left on this generic list, so a
+                    plain detail line is all it needs — the stack/result boxes
+                    and the live-site pill live in <ProjectList />. */}
+                {item.detail && (
+                  <span className="mt-0.5 block text-xs text-zinc-400">
+                    {item.detail}
+                  </span>
                 )}
               </li>
             ))}
@@ -203,6 +176,155 @@ export default function Overlay() {
         </section>
       </div>
     </>
+  );
+}
+
+/**
+ * The Projects list. Split out from the generic item list because it's the one
+ * section that outgrows the panel: every card carries a stack box, a result box
+ * and sometimes an award pill. It gets its own capped scroll area so the panel
+ * header — title and close button — stays pinned above it.
+ *
+ * The top/bottom fades follow the scroll position rather than a permanent
+ * `mask-image` (the trick <SkillsMarquee /> uses): that strip loops forever, so
+ * a fixed mask always reads right, whereas a finite list would sit at rest with
+ * its first card veiled for no reason.
+ */
+function ProjectList({
+  items,
+  accent,
+}: {
+  items: SectionItem[];
+  accent: string;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [atTop, setAtTop] = useState(true);
+  const [atBottom, setAtBottom] = useState(true);
+
+  // A ResizeObserver rather than a measure-on-mount call: it fires once on
+  // observe (covering the initial layout without a synchronous setState in the
+  // effect) and again whenever the panel or the cards reflow — e.g. text
+  // rewrapping at a narrower width, which changes whether the list overflows
+  // at all. The inner <ul> is observed too since that is what actually grows.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      setAtTop(scrollTop <= 1);
+      setAtBottom(scrollTop + clientHeight >= scrollHeight - 1);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
+
+  const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    setAtTop(scrollTop <= 1);
+    setAtBottom(scrollTop + clientHeight >= scrollHeight - 1);
+  };
+
+  return (
+    <div className="relative mt-5">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        // tabIndex so the region is keyboard-scrollable on its own, and
+        // overscroll-contain so bottoming out doesn't chain the scroll up into
+        // the panel's own overflow-y-auto.
+        tabIndex={0}
+        role="group"
+        aria-label="Projects"
+        className="overlay-scroll max-h-[32vh] overflow-y-auto overscroll-contain pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:max-h-[46vh]"
+      >
+        <ul className="space-y-2">
+          {items.map((item) => (
+            <li
+              key={item.label}
+              className="rounded-lg border border-white/5 bg-white/5 px-4 py-3"
+            >
+              <span
+                className="block h-1 w-6 rounded-full"
+                style={{ backgroundColor: accent }}
+                aria-hidden
+              />
+              {item.award && (
+                <span className="mt-2 block">
+                  <span
+                    className="inline-block rounded-full border px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.15em]"
+                    style={{ color: accent, borderColor: accent }}
+                  >
+                    {item.award}
+                  </span>
+                </span>
+              )}
+              {item.href ? (
+                <a
+                  href={item.href}
+                  {...externalLinkProps(item.href)}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-zinc-100 transition-colors hover:text-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                  style={{ "--accent": accent } as React.CSSProperties}
+                >
+                  {item.label}
+                  <ArrowIcon />
+                </a>
+              ) : (
+                <span className="mt-2 block text-sm font-medium text-zinc-100">
+                  {item.label}
+                </span>
+              )}
+              {/* Supporting text splits into two stacked mini boxes — tech on
+                  top, result below. */}
+              <div className="mt-2 space-y-1.5">
+                {item.stack && (
+                  <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
+                    {item.stack}
+                  </span>
+                )}
+                {item.detail && (
+                  <span className="block rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-relaxed text-zinc-400">
+                    {item.detail}
+                  </span>
+                )}
+              </div>
+              {item.liveHref && (
+                <a
+                  href={item.liveHref}
+                  {...externalLinkProps(item.liveHref)}
+                  className="mt-2 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.15em] text-zinc-300 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                  style={
+                    {
+                      "--accent": accent,
+                      borderColor: accent,
+                    } as React.CSSProperties
+                  }
+                >
+                  Live site
+                  <ArrowIcon />
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+      {/* An arbitrary linear-gradient rather than the gradient utilities:
+          zinc-900 (#18181b) is the panel's own colour, so the fades read as the
+          panel eating the list rather than a grey band laid over it. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute left-0 right-2.5 top-0 h-6 bg-[linear-gradient(to_bottom,#18181b,transparent)] transition-opacity duration-200 ${
+          atTop ? "opacity-0" : "opacity-100"
+        }`}
+      />
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute bottom-0 left-0 right-2.5 h-6 bg-[linear-gradient(to_top,#18181b,transparent)] transition-opacity duration-200 ${
+          atBottom ? "opacity-0" : "opacity-100"
+        }`}
+      />
+    </div>
   );
 }
 

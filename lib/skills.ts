@@ -13,6 +13,7 @@ export interface Skill {
 
 export const SKILLS: Skill[] = [
   { name: "Python", kind: "Language" },
+  { name: "C++", kind: "Language" },
   { name: "TypeScript", kind: "Language" },
   { name: "JavaScript", kind: "Language" },
   { name: "HTML", kind: "Language" },
@@ -31,8 +32,13 @@ export const SKILLS: Skill[] = [
   { name: "PyTorch", kind: "Library" },
   { name: "LightGBM", kind: "Library" },
   { name: "Stable-Baselines3", kind: "Library" },
+  { name: "Gymnasium", kind: "Library" },
+  { name: "pandas", kind: "Library" },
   { name: "OpenCV", kind: "Library" },
   { name: "Whisper", kind: "Library" },
   { name: "Pydantic", kind: "Library" },
+  { name: "Zod", kind: "Library" },
+  { name: "MapLibre GL", kind: "Library" },
+  { name: "Vitest", kind: "Library" },
   { name: "VoyageAI", kind: "Library" },
 ];

@@ -110,8 +110,13 @@ export const CONTENT: Record<SectionId, SectionContent> = {
     items: [
       {
         group: "Work",
+        label: "Software Developer",
+        detail: "UofT Formula Racing (Driverless) · Sep 2026 – Present",
+      },
+      {
+        group: "Work",
         label: "Skate Patroller",
-        detail: "City of Mississauga · Jan 2023 – Present",
+        detail: "City of Mississauga · Jan 2023 – Aug 2026",
       },
       {
         group: "Education",

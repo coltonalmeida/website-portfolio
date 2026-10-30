@@ -55,6 +55,22 @@ export const CONTENT: Record<SectionId, SectionContent> = {
     body: "Source code on GitHub.",
     items: [
       {
+        label: "FlowState",
+        stack: "Python · SUMO · Stable-Baselines3 · FastAPI · React · TypeScript",
+        detail:
+          "Digital twin of downtown Toronto for traffic-signal control · RL and forecast-assisted controllers vs fixed-time on identical traffic · 49% lower queue-forecast error than baseline",
+        href: "https://github.com/coltonalmeida/flow_state",
+        liveHref: "https://flowstate.nyc",
+      },
+      {
+        label: "Relay311",
+        award: "Future Legends Hackathon · 5th Place",
+        stack: "Next.js · TypeScript · Vapi · Gemini · Supabase · MapLibre",
+        detail:
+          "Voice 311 line that turns residents' calls into triaged incidents · auto-classifies, prioritizes and links duplicate reports",
+        href: "https://github.com/coltonalmeida/Relay311",
+      },
+      {
         label: "Loadshift",
         award: "Ignition Hacks v7 · 1st Overall",
         stack: "Python · FastAPI · LightGBM · Next.js · TypeScript · Render",
